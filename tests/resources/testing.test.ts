@@ -22,8 +22,9 @@ describe('TestingResource configs', () => {
   });
 
   it('list', async () => {
+    // Server returns { configs: [...] }, not { items }.
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ id: 'cfg_1', name: 'A', phoneNumber: '+1', steps: [] }], nextToken: null } },
+      { body: { configs: [{ id: 'cfg_1', name: 'A', phoneNumber: '+1', steps: [] }] } },
     ]);
     const c = client(fetch);
     const out = [];
@@ -59,7 +60,8 @@ describe('TestingResource jobs', () => {
 
   it('list / get / delete', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ id: 'job_1', configId: 'cfg_1', status: 'completed' }], nextToken: null } },
+      // Server returns { jobs: [...] }, not { items }.
+      { body: { jobs: [{ id: 'job_1', configId: 'cfg_1', status: 'completed' }] } },
       { body: { id: 'job_1', configId: 'cfg_1', status: 'completed' } },
       { body: { message: 'ok' } },
     ]);
@@ -74,44 +76,57 @@ describe('TestingResource jobs', () => {
 });
 
 describe('TestingResource runs', () => {
-  it('create from jobId', async () => {
+  it('create from jobId unwraps {message, run}', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { runId: 'run_1', jobId: 'job_1', status: 'running' } },
+      {
+        body: {
+          message: 'Test run started',
+          run: { id: 'run_1', jobId: 'job_1', status: 'pending' },
+        },
+      },
     ]);
     const c = client(fetch);
     const run = await c.testing.runs.create({ jobId: 'job_1' });
-    expect(run.runId).toBe('run_1');
+    expect(run.id).toBe('run_1');
+    expect(run.status).toBe('pending');
     expect(calls[0].url).toContain('/testing/runs');
     expect(JSON.parse(calls[0].init.body as string)).toEqual({ jobId: 'job_1' });
   });
 
-  it('create from testConfigId (ad-hoc)', async () => {
+  it('create from testConfigId (ad-hoc) unwraps {message, run}', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { runId: 'run_2', status: 'running' } },
+      {
+        body: {
+          message: 'Test run started',
+          run: { id: 'run_2', testConfigId: 'cfg_1', status: 'pending' },
+        },
+      },
     ]);
     const c = client(fetch);
     const run = await c.testing.runs.create({ testConfigId: 'cfg_1' });
-    expect(run.runId).toBe('run_2');
+    expect(run.id).toBe('run_2');
+    expect(run.testConfigId).toBe('cfg_1');
     expect(JSON.parse(calls[0].init.body as string)).toEqual({ testConfigId: 'cfg_1' });
   });
 
   it('list / get', async () => {
+    // Server returns { runs: [...] }, not { items }.
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ runId: 'run_1', jobId: 'job_1', status: 'completed' }], nextToken: null } },
-      { body: { runId: 'run_1', jobId: 'job_1', status: 'completed', result: 'pass' } },
+      { body: { runs: [{ id: 'run_1', jobId: 'job_1', status: 'completed' }] } },
+      { body: { id: 'run_1', jobId: 'job_1', status: 'completed', result: 'pass' } },
     ]);
     const c = client(fetch);
     const out = [];
     for await (const r of c.testing.runs.list()) out.push(r);
-    expect(out[0].runId).toBe('run_1');
+    expect(out[0].id).toBe('run_1');
     const r = await c.testing.runs.get('run_1');
     expect(r.result).toBe('pass');
   });
 
   it('waitForRun returns on terminal', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { runId: 'run_1', jobId: 'job_1', status: 'running' } },
-      { body: { runId: 'run_1', jobId: 'job_1', status: 'completed' } },
+      { body: { id: 'run_1', jobId: 'job_1', status: 'running' } },
+      { body: { id: 'run_1', jobId: 'job_1', status: 'completed' } },
     ]);
     const c = client(fetch);
     const run = await c.testing.runs.waitForRun('run_1', {
@@ -124,7 +139,7 @@ describe('TestingResource runs', () => {
   it('waitForRun times out', async () => {
     const { fetch } = makeQueuedFetch(
       Array.from({ length: 50 }, () => ({
-        body: { runId: 'run_1', jobId: 'job_1', status: 'running' },
+        body: { id: 'run_1', jobId: 'job_1', status: 'running' },
       }))
     );
     const c = client(fetch);

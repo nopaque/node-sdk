@@ -62,6 +62,7 @@ export interface CreateTestJobRequest {
 }
 
 export type TestRunStatus =
+  | 'pending'
   | 'running'
   | 'completed'
   | 'failed'
@@ -69,13 +70,26 @@ export type TestRunStatus =
 
 export type TestRunResult = 'pass' | 'fail' | 'partial';
 
+/**
+ * A single execution of a test. The primary identifier is `id`, matching the
+ * server's entity shape. Pass it to `waitForRun()` and `get()`.
+ *
+ * `status` is optional because a newly-created run may not yet carry one
+ * until the orchestrator picks it up.
+ */
 export interface TestRun {
-  runId: string;
-  jobId: string;
-  status: TestRunStatus;
+  id: string;
+  jobId?: string;
+  testConfigId?: string;
+  workspaceId?: string;
+  status?: TestRunStatus;
   result?: TestRunResult;
   startedAt?: string;
   completedAt?: string;
+  launchDeadline?: string;
+  totalSteps?: number;
+  passedSteps?: number;
+  failedSteps?: number;
   [key: string]: unknown;
 }
 

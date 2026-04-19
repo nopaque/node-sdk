@@ -37,8 +37,14 @@ export class TestingConfigsResource extends Resource {
     requestOptions?: RequestOptions
   ): Paginator<TestConfig> {
     return new Paginator<TestConfig>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/testing/configs', { params: p, requestOptions }),
+      fetchPage: async (p) => {
+        // Server returns { configs: [...] } rather than { items, nextToken }.
+        const raw = await this.transport.request<{
+          configs?: TestConfig[];
+          items?: TestConfig[];
+        }>('GET', '/testing/configs', { params: p, requestOptions });
+        return { items: raw.configs ?? raw.items ?? [], nextToken: null };
+      },
       params: { ...params },
     });
   }
@@ -47,10 +53,12 @@ export class TestingConfigsResource extends Resource {
     params: TestingListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<TestConfig>> {
-    const raw = await this.transport.request<{ items: TestConfig[]; nextToken: string | null }>(
-      'GET', '/testing/configs', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      configs?: TestConfig[];
+      items?: TestConfig[];
+      nextToken?: string | null;
+    }>('GET', '/testing/configs', { params, requestOptions });
+    return new Page(raw.configs ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(configId: string, requestOptions?: RequestOptions): Promise<TestConfig> {
@@ -86,8 +94,14 @@ export class TestingJobsResource extends Resource {
     requestOptions?: RequestOptions
   ): Paginator<TestJob> {
     return new Paginator<TestJob>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/testing/jobs', { params: p, requestOptions }),
+      fetchPage: async (p) => {
+        // Server returns { jobs: [...] } rather than { items, nextToken }.
+        const raw = await this.transport.request<{
+          jobs?: TestJob[];
+          items?: TestJob[];
+        }>('GET', '/testing/jobs', { params: p, requestOptions });
+        return { items: raw.jobs ?? raw.items ?? [], nextToken: null };
+      },
       params: { ...params },
     });
   }
@@ -96,10 +110,12 @@ export class TestingJobsResource extends Resource {
     params: TestingListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<TestJob>> {
-    const raw = await this.transport.request<{ items: TestJob[]; nextToken: string | null }>(
-      'GET', '/testing/jobs', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      jobs?: TestJob[];
+      items?: TestJob[];
+      nextToken?: string | null;
+    }>('GET', '/testing/jobs', { params, requestOptions });
+    return new Page(raw.jobs ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(jobId: string, requestOptions?: RequestOptions): Promise<TestJob> {
@@ -116,7 +132,11 @@ export class TestingRunsResource extends Resource {
     body: CreateTestRunRequest,
     requestOptions?: RequestOptions
   ): Promise<TestRun> {
-    return await this.transport.request('POST', '/testing/runs', { body, requestOptions });
+    // POST returns { message, run } — unwrap the run object.
+    const raw = await this.transport.request<{ message?: string; run?: TestRun } & TestRun>(
+      'POST', '/testing/runs', { body, requestOptions }
+    );
+    return raw.run ?? raw;
   }
 
   list(
@@ -124,8 +144,14 @@ export class TestingRunsResource extends Resource {
     requestOptions?: RequestOptions
   ): Paginator<TestRun> {
     return new Paginator<TestRun>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/testing/runs', { params: p, requestOptions }),
+      fetchPage: async (p) => {
+        // Server returns { runs: [...] } rather than { items, nextToken }.
+        const raw = await this.transport.request<{
+          runs?: TestRun[];
+          items?: TestRun[];
+        }>('GET', '/testing/runs', { params: p, requestOptions });
+        return { items: raw.runs ?? raw.items ?? [], nextToken: null };
+      },
       params: { ...params },
     });
   }
@@ -134,10 +160,12 @@ export class TestingRunsResource extends Resource {
     params: TestingListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<TestRun>> {
-    const raw = await this.transport.request<{ items: TestRun[]; nextToken: string | null }>(
-      'GET', '/testing/runs', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      runs?: TestRun[];
+      items?: TestRun[];
+      nextToken?: string | null;
+    }>('GET', '/testing/runs', { params, requestOptions });
+    return new Page(raw.runs ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(runId: string, requestOptions?: RequestOptions): Promise<TestRun> {
@@ -150,7 +178,7 @@ export class TestingRunsResource extends Resource {
   ): Promise<TestRun> {
     return await waitFor<TestRun>({
       fetch: () => this.get(runId, opts.requestOptions),
-      isTerminal: (run) => RUN_TERMINAL_STATUSES.has(run.status),
+      isTerminal: (run) => run.status !== undefined && RUN_TERMINAL_STATUSES.has(run.status),
       timeout: opts.timeout,
       initialInterval: opts.pollInterval,
       intervalCap: opts.intervalCap,
