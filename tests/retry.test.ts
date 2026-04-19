@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { computeBackoff, shouldRetry, delayFor } from '../src/retry.js';
 import {
   RateLimitError,
@@ -20,10 +20,16 @@ function apiErr(Cls: ApiErrorCtor, status: number): Error {
 
 describe('retry', () => {
   it('backoff is monotonic ignoring jitter', () => {
-    const d = (a: number) => computeBackoff(a, { base: 500, cap: 8000, jitter: 1.5 });
-    expect(d(0)).toBeLessThanOrEqual(d(1));
-    expect(d(1)).toBeLessThanOrEqual(d(2));
-    expect(d(2)).toBeLessThanOrEqual(d(3));
+    // Pin Math.random so the jitter multiplier is constant across calls.
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(1);  // upper bound jitter
+    try {
+      const d = (a: number) => computeBackoff(a, { base: 500, cap: 8000, jitter: 1.5 });
+      expect(d(0)).toBeLessThanOrEqual(d(1));
+      expect(d(1)).toBeLessThanOrEqual(d(2));
+      expect(d(2)).toBeLessThanOrEqual(d(3));
+    } finally {
+      rand.mockRestore();
+    }
   });
 
   it('backoff is capped', () => {
