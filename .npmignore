@@ -1,0 +1,9 @@
+tests/
+examples/
+.github/
+tsconfig*.json
+tsup.config.ts
+eslint.config.js
+*.log
+.env*
+coverage/
