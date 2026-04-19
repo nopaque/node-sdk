@@ -9,7 +9,8 @@ describe.skipIf(!apiKey)('integration smoke (live dev API)', () => {
   it('list profiles returns without error', async () => {
     const client = getClient();
     let seen = 0;
-    for await (const _ of client.profiles.list({ limit: 5 })) seen++;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for await (const _profile of client.profiles.list({ limit: 5 })) seen++;
     expect(seen).toBeGreaterThanOrEqual(0);
   });
 
