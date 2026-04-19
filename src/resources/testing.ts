@@ -144,7 +144,7 @@ export class TestingRunsResource extends Resource {
     return await this.transport.request('GET', `/testing/runs/${runId}`, { requestOptions });
   }
 
-  async waitForComplete(
+  async waitForRun(
     runId: string,
     opts: TestingWaitForOptions = {}
   ): Promise<TestRun> {

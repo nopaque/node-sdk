@@ -97,20 +97,20 @@ describe('TestingResource runs', () => {
     expect(r.result).toBe('pass');
   });
 
-  it('waitForComplete returns on terminal', async () => {
+  it('waitForRun returns on terminal', async () => {
     const { fetch } = makeQueuedFetch([
       { body: { runId: 'run_1', jobId: 'job_1', status: 'running' } },
       { body: { runId: 'run_1', jobId: 'job_1', status: 'completed' } },
     ]);
     const c = client(fetch);
-    const run = await c.testing.runs.waitForComplete('run_1', {
+    const run = await c.testing.runs.waitForRun('run_1', {
       timeout: 5000,
       pollInterval: 1,
     });
     expect(run.status).toBe('completed');
   });
 
-  it('waitForComplete times out', async () => {
+  it('waitForRun times out', async () => {
     const { fetch } = makeQueuedFetch(
       Array.from({ length: 50 }, () => ({
         body: { runId: 'run_1', jobId: 'job_1', status: 'running' },
@@ -118,7 +118,7 @@ describe('TestingResource runs', () => {
     );
     const c = client(fetch);
     await expect(
-      c.testing.runs.waitForComplete('run_1', { timeout: 30, pollInterval: 10 })
+      c.testing.runs.waitForRun('run_1', { timeout: 30, pollInterval: 10 })
     ).rejects.toBeInstanceOf(NopaqueTimeoutError);
   });
 });
