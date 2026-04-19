@@ -79,6 +79,12 @@ export interface TestRun {
   [key: string]: unknown;
 }
 
-export interface CreateTestRunRequest {
-  jobId: string;
-}
+/**
+ * Body for POST /testing/runs. Exactly one of jobId or testConfigId
+ * must be provided:
+ *   - jobId — run an existing scheduled test job
+ *   - testConfigId — ad-hoc run directly from a test config
+ */
+export type CreateTestRunRequest =
+  | { jobId: string; testConfigId?: never }
+  | { jobId?: never; testConfigId: string };

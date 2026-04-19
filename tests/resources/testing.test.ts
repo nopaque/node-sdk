@@ -74,7 +74,7 @@ describe('TestingResource jobs', () => {
 });
 
 describe('TestingResource runs', () => {
-  it('create', async () => {
+  it('create from jobId', async () => {
     const { fetch, calls } = makeQueuedFetch([
       { body: { runId: 'run_1', jobId: 'job_1', status: 'running' } },
     ]);
@@ -82,6 +82,17 @@ describe('TestingResource runs', () => {
     const run = await c.testing.runs.create({ jobId: 'job_1' });
     expect(run.runId).toBe('run_1');
     expect(calls[0].url).toContain('/testing/runs');
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ jobId: 'job_1' });
+  });
+
+  it('create from testConfigId (ad-hoc)', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { runId: 'run_2', status: 'running' } },
+    ]);
+    const c = client(fetch);
+    const run = await c.testing.runs.create({ testConfigId: 'cfg_1' });
+    expect(run.runId).toBe('run_2');
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ testConfigId: 'cfg_1' });
   });
 
   it('list / get', async () => {
