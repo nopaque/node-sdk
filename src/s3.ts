@@ -72,7 +72,7 @@ export async function s3Put(
   try {
     resp = await fetch(url, {
       method: 'PUT',
-      body: data,
+      body: data as BodyInit,
       headers: { 'content-type': contentType },
     });
   } catch (err) {

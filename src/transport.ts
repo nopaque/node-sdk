@@ -11,8 +11,13 @@ import { composeUserAgent } from './userAgent.js';
 import { mergeOptions, type RequestOptions } from './requestOptions.js';
 import { delayFor, shouldRetry } from './retry.js';
 
+export type QueryValue = string | number | boolean | null | undefined;
+
+// Accept both Record-shaped and interface-shaped param objects. Interfaces
+// in TS don't have an implicit string index signature, so we widen with
+// `object` to let callers pass typed interfaces (e.g. MappingListParams).
 export interface RequestParams {
-  params?: Record<string, string | number | boolean | null | undefined>;
+  params?: object;
   body?: unknown;
   requestOptions?: RequestOptions;
 }
@@ -84,10 +89,7 @@ export class Transport {
     }
   }
 
-  private buildUrl(
-    path: string,
-    params?: Record<string, string | number | boolean | null | undefined>
-  ): string {
+  private buildUrl(path: string, params?: object): string {
     const normalized = path.startsWith('/') ? path : `/${path}`;
     const url = new URL(`${this.config.baseUrl}${normalized}`);
     if (params) {
