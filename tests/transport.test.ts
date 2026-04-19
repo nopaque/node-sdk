@@ -111,3 +111,53 @@ describe('Transport', () => {
     expect(h.get('x-source')).toBe('override');
   });
 });
+
+describe('Transport retry integration', () => {
+  it('retries GET on 500 up to maxRetries', async () => {
+    const { fetch } = makeQueuedFetch([
+      { status: 500, body: { error: 'x' } },
+      { status: 500, body: { error: 'x' } },
+      { body: { ok: true } },
+    ]);
+    const t = new Transport(resolveConfig({ apiKey: 'k', fetch, maxRetries: 2 }));
+    const out = await t.request('GET', '/x');
+    expect(out).toEqual({ ok: true });
+  });
+
+  it('does not retry POST on 500', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ status: 500, body: { error: 'x' } }]);
+    const t = new Transport(resolveConfig({ apiKey: 'k', fetch, maxRetries: 3 }));
+    await expect(t.request('POST', '/x', { body: {} })).rejects.toBeInstanceOf(ServerError);
+    expect(calls.length).toBe(1);
+  });
+
+  it('retries POST on 429', async () => {
+    const { fetch } = makeQueuedFetch([
+      { status: 429, body: { error: 'rate' }, headers: { 'retry-after': '0' } },
+      { body: { ok: true } },
+    ]);
+    const t = new Transport(resolveConfig({ apiKey: 'k', fetch, maxRetries: 1 }));
+    const out = await t.request('POST', '/x', { body: {} });
+    expect(out).toEqual({ ok: true });
+  });
+
+  it('fires onRetry callback', async () => {
+    const { fetch } = makeQueuedFetch([
+      { status: 500, body: { error: 'x' } },
+      { body: { ok: true } },
+    ]);
+    const events: Array<[number, string, number]> = [];
+    const t = new Transport(
+      resolveConfig({
+        apiKey: 'k',
+        fetch,
+        maxRetries: 1,
+        onRetry: (attempt, err, delay) => events.push([attempt, err.constructor.name, delay]),
+      })
+    );
+    await t.request('GET', '/x');
+    expect(events.length).toBe(1);
+    expect(events[0][0]).toBe(0);
+    expect(events[0][1]).toBe('ServerError');
+  });
+});

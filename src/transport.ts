@@ -3,11 +3,13 @@ import {
   APIConnectionError,
   APITimeoutError,
   NopaqueAPIError,
+  NopaqueError,
   RateLimitError,
   classifyStatus,
 } from './errors.js';
 import { composeUserAgent } from './userAgent.js';
 import { mergeOptions, type RequestOptions } from './requestOptions.js';
+import { delayFor, shouldRetry } from './retry.js';
 
 export interface RequestParams {
   params?: Record<string, string | number | boolean | null | undefined>;
@@ -27,39 +29,59 @@ export class Transport {
     const headers = this.buildHeaders(requestOptions);
     const merged = mergeOptions(undefined, requestOptions);
     const timeout = merged.timeout ?? this.config.timeout;
+    const maxRetries = merged.maxRetries ?? this.config.maxRetries;
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-    const combinedSignal = mergeAbortSignals([controller.signal, merged.signal]);
+    let attempt = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let beforeSend = true;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      const combinedSignal = mergeAbortSignals([controller.signal, merged.signal]);
 
-    let response: Response;
-    try {
-      response = await this.config.fetch(url, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: combinedSignal,
-      });
-    } catch (err) {
-      if ((err as { name?: string }).name === 'AbortError') {
-        throw new APITimeoutError(`request timed out after ${timeout}ms`);
+      let err: NopaqueError | null = null;
+      let response: Response | null = null;
+      try {
+        response = await this.config.fetch(url, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          signal: combinedSignal,
+        });
+        beforeSend = false;
+        if (!response.ok) {
+          err = await classifyResponse(response);
+        }
+      } catch (fetchErr) {
+        if ((fetchErr as { name?: string }).name === 'AbortError') {
+          err = new APITimeoutError(`request timed out after ${timeout}ms`);
+        } else {
+          err = new APIConnectionError(
+            `fetch failed: ${(fetchErr as Error).message ?? 'unknown'}`,
+            fetchErr
+          );
+        }
+      } finally {
+        clearTimeout(timer);
       }
-      throw new APIConnectionError(
-        `fetch failed: ${(err as Error).message ?? 'unknown'}`,
-        err
-      );
-    } finally {
-      clearTimeout(timer);
-    }
 
-    if (!response.ok) {
-      throw await classifyResponse(response);
-    }
+      if (!err) {
+        if (response!.status === 204) return undefined as T;
+        const ct = response!.headers.get('content-type') ?? '';
+        if (!ct.includes('application/json')) return undefined as T;
+        return (await response!.json()) as T;
+      }
 
-    if (response.status === 204) return undefined as T;
-    const ct = response.headers.get('content-type') ?? '';
-    if (!ct.includes('application/json')) return undefined as T;
-    return (await response.json()) as T;
+      if (attempt >= maxRetries) throw err;
+      if (!shouldRetry({ method, error: err, beforeSend })) throw err;
+
+      const delay = delayFor({ attempt, error: err });
+      if (this.config.onRetry) {
+        try { this.config.onRetry(attempt, err, delay); } catch { /* never break */ }
+      }
+      await new Promise((r) => setTimeout(r, delay));
+      attempt++;
+    }
   }
 
   private buildUrl(
