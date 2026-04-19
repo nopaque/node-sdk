@@ -1,0 +1,18 @@
+{
+  "name": "@nopaque/sdk-examples",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "quickstart": "tsx quickstart.ts",
+    "mapping": "tsx mappingAndWait.ts",
+    "audio": "tsx audioUpload.ts",
+    "cjs": "node commonjs.js"
+  },
+  "dependencies": {
+    "@nopaque/sdk": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
