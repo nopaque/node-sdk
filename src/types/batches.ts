@@ -35,7 +35,7 @@ export interface BatchesListParams {
 export type BatchRunStatus = 'running' | 'completed' | 'failed' | 'cancelled';
 
 export interface BatchRun {
-  runId: string;
+  id: string;
   batchId?: string;
   status: BatchRunStatus;
   totalNumbers?: number;
@@ -44,5 +44,7 @@ export interface BatchRun {
   passRate?: number;
   startedAt?: string;
   completedAt?: string;
+  /** @deprecated use `id` */
+  runId?: string;
   [key: string]: unknown;
 }

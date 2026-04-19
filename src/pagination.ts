@@ -13,10 +13,18 @@ export interface PaginatorParams {
   [key: string]: unknown;
 }
 
+/**
+ * A page may be returned in either of two shapes:
+ *   { items: [...], nextToken: ... }         — the standard shape
+ *   { <itemsKey>: [...], nextToken?: ... }   — the resource-named shape
+ * When `itemsKey` is provided, the paginator prefers that key but falls back
+ * to `items` for forward compatibility.
+ */
 export interface PaginatorOptions<T, Raw = unknown> {
-  fetchPage: (params: PaginatorParams) => Promise<{ items: Raw[]; nextToken: string | null }>;
+  fetchPage: (params: PaginatorParams) => Promise<Record<string, unknown>>;
   params: PaginatorParams;
   mapItem?: (raw: Raw) => T;
+  itemsKey?: string;
 }
 
 export class Paginator<T, Raw = unknown> implements AsyncIterable<T> {
@@ -25,17 +33,23 @@ export class Paginator<T, Raw = unknown> implements AsyncIterable<T> {
   async *[Symbol.asyncIterator](): AsyncIterator<T> {
     const limit = this.options.params.limit;
     const params: PaginatorParams = { ...this.options.params };
+    const key = this.options.itemsKey;
     let yielded = 0;
     while (true) {
       const page = await this.options.fetchPage(params);
-      for (const raw of page.items) {
+      const rawItems = (key ? (page as Record<string, unknown>)[key] : undefined)
+        ?? (page as Record<string, unknown>).items
+        ?? [];
+      const items = rawItems as Raw[];
+      for (const raw of items) {
         const item = (this.options.mapItem ? this.options.mapItem(raw) : (raw as unknown as T));
         yield item;
         yielded++;
         if (limit !== undefined && yielded >= limit) return;
       }
-      if (!page.nextToken) return;
-      params.nextToken = page.nextToken;
+      const nextToken = (page as Record<string, unknown>).nextToken as string | null | undefined;
+      if (!nextToken) return;
+      params.nextToken = nextToken;
     }
   }
 }

@@ -36,6 +36,7 @@ export class BatchesResource extends Resource {
       fetchPage: async (p) =>
         await this.transport.request('GET', '/testing/batches', { params: p, requestOptions }),
       params: { ...params },
+      itemsKey: 'batches',
     });
   }
 
@@ -43,10 +44,12 @@ export class BatchesResource extends Resource {
     params: BatchesListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<Batch>> {
-    const raw = await this.transport.request<{ items: Batch[]; nextToken: string | null }>(
-      'GET', '/testing/batches', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      batches?: Batch[];
+      items?: Batch[];
+      nextToken?: string | null;
+    }>('GET', '/testing/batches', { params, requestOptions });
+    return new Page(raw.batches ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(batchId: string, requestOptions?: RequestOptions): Promise<Batch> {
@@ -89,6 +92,7 @@ export class BatchesResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'runs',
     });
   }
 
@@ -103,6 +107,7 @@ export class BatchesResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'runs',
     });
   }
 

@@ -66,11 +66,13 @@ export interface LoadTestStatusResponse {
 }
 
 export interface LoadTestRun {
-  runId: string;
+  id: string;
   loadTestId?: string;
   status: LoadTestStatus;
   passRate?: number;
   startedAt?: string;
   completedAt?: string;
+  /** @deprecated use `id` */
+  runId?: string;
   [key: string]: unknown;
 }

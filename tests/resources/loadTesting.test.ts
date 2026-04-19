@@ -9,7 +9,7 @@ function client(fetch: typeof globalThis.fetch) {
 describe('LoadTestingResource', () => {
   it('create', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { id: 'lt_1', name: 'P', configId: 'c', concurrency: 10, totalCalls: 100, status: 'created' } },
+      { body: { config: { id: 'lt_1', name: 'P', configId: 'c', concurrency: 10, totalCalls: 100, status: 'created' } } },
     ]);
     const c = client(fetch);
     const lt = await c.loadTesting.create({
@@ -24,9 +24,9 @@ describe('LoadTestingResource', () => {
 
   it('list / get / update / delete', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ id: 'lt_1', name: 'A', configId: 'c', concurrency: 1, totalCalls: 10, status: 'created' }], nextToken: null } },
-      { body: { id: 'lt_1', name: 'A', configId: 'c', concurrency: 1, totalCalls: 10, status: 'created' } },
-      { body: { id: 'lt_1', name: 'A', configId: 'c', concurrency: 2, totalCalls: 10, status: 'created' } },
+      { body: { configs: [{ id: 'lt_1', name: 'A', configId: 'c', concurrency: 1, totalCalls: 10, status: 'created' }] } },
+      { body: { id: 'lt_1', name: 'A', configId: 'c', concurrency: 1, totalCalls: 10, status: 'created', testConfig: { id: 'c' } } },
+      { body: { config: { id: 'lt_1', name: 'A', configId: 'c', concurrency: 2, totalCalls: 10, status: 'created' } } },
       { body: { message: 'ok' } },
     ]);
     const c = client(fetch);
@@ -34,7 +34,8 @@ describe('LoadTestingResource', () => {
     for await (const x of c.loadTesting.list()) out.push(x);
     expect(out).toHaveLength(1);
     await c.loadTesting.get('lt_1');
-    await c.loadTesting.update('lt_1', { concurrency: 2 });
+    const updated = await c.loadTesting.update('lt_1', { concurrency: 2 });
+    expect(updated.concurrency).toBe(2);
     await c.loadTesting.delete('lt_1');
     expect(calls[2].init.method).toBe('PUT');
     expect(calls[3].init.method).toBe('DELETE');
@@ -70,12 +71,12 @@ describe('LoadTestingResource', () => {
 
   it('listRuns', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ runId: 'ltrun_1', loadTestId: 'lt_1', status: 'completed' }], nextToken: null } },
+      { body: { runs: [{ id: 'ltrun_1', loadTestId: 'lt_1', status: 'completed' }] } },
     ]);
     const c = client(fetch);
     const out = [];
     for await (const r of c.loadTesting.listRuns()) out.push(r);
-    expect(out[0].runId).toBe('ltrun_1');
+    expect(out[0].id).toBe('ltrun_1');
     expect(calls[0].url).toContain('/testing/load-tests/runs');
   });
 

@@ -48,7 +48,8 @@ export interface ProfilesByParametersParams {
 }
 
 export interface ProfilesByParametersResponse {
-  items: Profile[];
+  profiles: Profile[];
+  count?: number;
 }
 
 export interface ProfileParametersResponse {

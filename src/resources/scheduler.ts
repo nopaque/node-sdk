@@ -24,6 +24,7 @@ export class SchedulerResource extends Resource {
       fetchPage: async (p) =>
         await this.transport.request('GET', '/schedules', { params: p, requestOptions }),
       params: { ...params },
+      itemsKey: 'schedules',
     });
   }
 
@@ -31,10 +32,12 @@ export class SchedulerResource extends Resource {
     params: ScheduleListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<Schedule>> {
-    const raw = await this.transport.request<{ items: Schedule[]; nextToken: string | null }>(
-      'GET', '/schedules', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      schedules?: Schedule[];
+      items?: Schedule[];
+      nextToken?: string | null;
+    }>('GET', '/schedules', { params, requestOptions });
+    return new Page(raw.schedules ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(scheduleId: string, requestOptions?: RequestOptions): Promise<Schedule> {

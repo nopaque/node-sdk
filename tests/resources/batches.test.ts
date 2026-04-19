@@ -27,7 +27,7 @@ describe('BatchesResource', () => {
 
   it('list / get / update / delete', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ id: 'batch_1', name: 'B', configId: 'c', datasetId: 'd', status: 'created' }], nextToken: null } },
+      { body: { batches: [{ id: 'batch_1', name: 'B', configId: 'c', datasetId: 'd', status: 'created' }] } },
       { body: { id: 'batch_1', name: 'B', configId: 'c', datasetId: 'd', status: 'created' } },
       { body: { id: 'batch_1', name: 'C', configId: 'c', datasetId: 'd', status: 'created' } },
       { body: { message: 'ok' } },
@@ -45,23 +45,23 @@ describe('BatchesResource', () => {
 
   it('run starts a batch run', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { runId: 'brun_1', batchId: 'batch_1', status: 'running' } },
+      { body: { id: 'brun_1', batchId: 'batch_1', status: 'running' } },
     ]);
     const c = client(fetch);
     const r = await c.batches.run('batch_1');
-    expect(r.runId).toBe('brun_1');
+    expect(r.id).toBe('brun_1');
     expect(calls[0].url).toContain('/testing/batches/batch_1/run');
     expect(calls[0].init.method).toBe('POST');
   });
 
   it('runs paginates per batch', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ runId: 'brun_1', status: 'completed' }], nextToken: null } },
+      { body: { runs: [{ id: 'brun_1', status: 'completed' }] } },
     ]);
     const c = client(fetch);
     const out = [];
     for await (const r of c.batches.runs('batch_1')) out.push(r);
-    expect(out[0].runId).toBe('brun_1');
+    expect(out[0].id).toBe('brun_1');
     expect(calls[0].url).toContain('/testing/batches/batch_1/runs');
   });
 
@@ -69,15 +69,14 @@ describe('BatchesResource', () => {
     const { fetch, calls } = makeQueuedFetch([
       {
         body: {
-          items: [{ runId: 'brun_1', batchId: 'batch_1', status: 'completed' }],
-          nextToken: null,
+          runs: [{ id: 'brun_1', batchId: 'batch_1', status: 'completed' }],
         },
       },
     ]);
     const c = client(fetch);
     const out = [];
     for await (const r of c.batches.listRuns()) out.push(r);
-    expect(out[0].runId).toBe('brun_1');
+    expect(out[0].id).toBe('brun_1');
     expect(calls[0].url).toContain('/testing/batch-runs');
   });
 
@@ -85,7 +84,7 @@ describe('BatchesResource', () => {
     const { fetch } = makeQueuedFetch([
       {
         body: {
-          runId: 'brun_1',
+          id: 'brun_1',
           batchId: 'batch_1',
           status: 'completed',
           passRate: 0.92,
@@ -99,8 +98,8 @@ describe('BatchesResource', () => {
 
   it('waitForRun returns on terminal', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { runId: 'brun_1', batchId: 'batch_1', status: 'running' } },
-      { body: { runId: 'brun_1', batchId: 'batch_1', status: 'completed' } },
+      { body: { id: 'brun_1', batchId: 'batch_1', status: 'running' } },
+      { body: { id: 'brun_1', batchId: 'batch_1', status: 'completed' } },
     ]);
     const c = client(fetch);
     const r = await c.batches.waitForRun('brun_1', { timeout: 5000, pollInterval: 1 });
@@ -110,7 +109,7 @@ describe('BatchesResource', () => {
   it('waitForRun times out', async () => {
     const { fetch } = makeQueuedFetch(
       Array.from({ length: 50 }, () => ({
-        body: { runId: 'brun_1', batchId: 'batch_1', status: 'running' },
+        body: { id: 'brun_1', batchId: 'batch_1', status: 'running' },
       }))
     );
     const c = client(fetch);

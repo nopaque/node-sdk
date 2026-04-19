@@ -25,6 +25,7 @@ export class DatasetsResource extends Resource {
       fetchPage: async (p) =>
         await this.transport.request('GET', '/datasets', { params: p, requestOptions }),
       params: { ...params },
+      itemsKey: 'datasets',
     });
   }
 
@@ -32,10 +33,12 @@ export class DatasetsResource extends Resource {
     params: DatasetsListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<Dataset>> {
-    const raw = await this.transport.request<{ items: Dataset[]; nextToken: string | null }>(
-      'GET', '/datasets', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      datasets?: Dataset[];
+      items?: Dataset[];
+      nextToken?: string | null;
+    }>('GET', '/datasets', { params, requestOptions });
+    return new Page(raw.datasets ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(datasetId: string, requestOptions?: RequestOptions): Promise<Dataset> {

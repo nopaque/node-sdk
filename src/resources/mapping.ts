@@ -122,6 +122,7 @@ export class MappingResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'runs',
     });
   }
 
@@ -137,6 +138,7 @@ export class MappingResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'rules',
     });
   }
 

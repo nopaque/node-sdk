@@ -28,7 +28,11 @@ export class LoadTestingResource extends Resource {
     body: CreateLoadTestRequest,
     requestOptions?: RequestOptions
   ): Promise<LoadTest> {
-    return await this.transport.request('POST', '/testing/load-tests', { body, requestOptions });
+    // POST /testing/load-tests returns `{ config: {...} }` — unwrap.
+    const raw = await this.transport.request<{ config?: LoadTest } & LoadTest>(
+      'POST', '/testing/load-tests', { body, requestOptions }
+    );
+    return raw.config ?? raw;
   }
 
   list(
@@ -42,6 +46,7 @@ export class LoadTestingResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'configs',
     });
   }
 
@@ -49,13 +54,17 @@ export class LoadTestingResource extends Resource {
     params: LoadTestingListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<LoadTest>> {
-    const raw = await this.transport.request<{ items: LoadTest[]; nextToken: string | null }>(
-      'GET', '/testing/load-tests', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      configs?: LoadTest[];
+      items?: LoadTest[];
+      nextToken?: string | null;
+    }>('GET', '/testing/load-tests', { params, requestOptions });
+    return new Page(raw.configs ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(loadTestId: string, requestOptions?: RequestOptions): Promise<LoadTest> {
+    // GET /testing/load-tests/{id} returns the config fields flat with a
+    // `testConfig` sibling — not wrapped.
     return await this.transport.request('GET', `/testing/load-tests/${loadTestId}`, {
       requestOptions,
     });
@@ -66,10 +75,11 @@ export class LoadTestingResource extends Resource {
     body: UpdateLoadTestRequest,
     requestOptions?: RequestOptions
   ): Promise<LoadTest> {
-    return await this.transport.request('PUT', `/testing/load-tests/${loadTestId}`, {
-      body,
-      requestOptions,
-    });
+    // PUT returns `{ config: updated }` — unwrap.
+    const raw = await this.transport.request<{ config?: LoadTest } & LoadTest>(
+      'PUT', `/testing/load-tests/${loadTestId}`, { body, requestOptions }
+    );
+    return raw.config ?? raw;
   }
 
   async delete(loadTestId: string, requestOptions?: RequestOptions): Promise<void> {
@@ -124,6 +134,7 @@ export class LoadTestingResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'runs',
     });
   }
 

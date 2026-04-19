@@ -105,7 +105,7 @@ describe('MappingResource', () => {
 
   it('runs paginates', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ id: 'r1', jobId: 'map_1', status: 'completed' }], nextToken: null } },
+      { body: { jobId: 'map_1', runs: [{ id: 'r1', jobId: 'map_1', status: 'completed' }], totalRuns: 1 } },
     ]);
     const c = client(fetch);
     const out = [];
@@ -115,7 +115,7 @@ describe('MappingResource', () => {
 
   it('paths / updatePath / deletePath / remap', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ jobId: 'map_1', path: '1>2', status: 'completed' }], nextToken: null } },
+      { body: { jobId: 'map_1', rules: [{ jobId: 'map_1', path: '1>2', status: 'completed' }], totalRules: 1 } },
       { body: { jobId: 'map_1', path: '1>2', status: 'completed' } },
       { body: { message: 'ok' } },
       { body: { id: 'map_1', name: 'x', status: 'running' } },

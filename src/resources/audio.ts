@@ -22,6 +22,7 @@ export class AudioResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'audioFiles',
     });
   }
 
@@ -30,10 +31,11 @@ export class AudioResource extends Resource {
     requestOptions?: RequestOptions
   ): Promise<Page<AudioFile>> {
     const raw = await this.transport.request<{
-      items: AudioFile[];
-      nextToken: string | null;
+      audioFiles?: AudioFile[];
+      items?: AudioFile[];
+      nextToken?: string | null;
     }>('GET', '/audio', { params, requestOptions });
-    return new Page(raw.items, raw.nextToken);
+    return new Page(raw.audioFiles ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(audioId: string, requestOptions?: RequestOptions): Promise<AudioFile> {

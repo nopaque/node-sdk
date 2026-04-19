@@ -30,6 +30,7 @@ export class ProfilesResource extends Resource {
       fetchPage: async (p) =>
         await this.transport.request('GET', '/profiles', { params: p, requestOptions }),
       params: { ...params },
+      itemsKey: 'profiles',
     });
   }
 
@@ -37,10 +38,12 @@ export class ProfilesResource extends Resource {
     params: ProfilesListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<Profile>> {
-    const raw = await this.transport.request<{ items: Profile[]; nextToken: string | null }>(
-      'GET', '/profiles', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      profiles?: Profile[];
+      items?: Profile[];
+      nextToken?: string | null;
+    }>('GET', '/profiles', { params, requestOptions });
+    return new Page(raw.profiles ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(profileId: string, requestOptions?: RequestOptions): Promise<Profile> {

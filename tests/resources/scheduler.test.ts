@@ -34,8 +34,8 @@ describe('SchedulerResource', () => {
     const { fetch } = makeQueuedFetch([
       {
         body: {
-          items: [{ id: 'sched_1', name: 'A', configId: 'c', cronExpression: '* * * * *', status: 'active' }],
-          nextToken: null,
+          schedules: [{ id: 'sched_1', name: 'A', configId: 'c', cronExpression: '* * * * *', status: 'active' }],
+          count: 1,
         },
       },
     ]);

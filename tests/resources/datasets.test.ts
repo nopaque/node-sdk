@@ -18,7 +18,7 @@ describe('DatasetsResource', () => {
 
   it('list paginates', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ id: 'ds_1', name: 'A' }], nextToken: null } },
+      { body: { datasets: [{ id: 'ds_1', name: 'A' }] } },
     ]);
     const c = client(fetch);
     const out = [];

@@ -13,7 +13,7 @@ function client(fetch: typeof globalThis.fetch) {
 describe('AudioResource', () => {
   it('list: returns paginated items', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav' }], nextToken: null } },
+      { body: { audioFiles: [{ id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav' }], count: 1 } },
     ]);
     const c = client(fetch);
     const out = [];
@@ -24,8 +24,8 @@ describe('AudioResource', () => {
 
   it('list: paginates', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav' }], nextToken: 't1' } },
-      { body: { items: [{ id: 'aud_2', fileName: 'b.wav', contentType: 'audio/wav' }], nextToken: null } },
+      { body: { audioFiles: [{ id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav' }], nextToken: 't1' } },
+      { body: { audioFiles: [{ id: 'aud_2', fileName: 'b.wav', contentType: 'audio/wav' }], nextToken: null } },
     ]);
     const c = client(fetch);
     const out = [];

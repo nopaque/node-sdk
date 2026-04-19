@@ -28,7 +28,7 @@ describe('SweepsResource', () => {
 
   it('list / get / update / delete', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ id: 'sweep_1', name: 'A', configId: 'c', status: 'created' }], nextToken: null } },
+      { body: { sweeps: [{ id: 'sweep_1', name: 'A', configId: 'c', status: 'created' }] } },
       { body: { id: 'sweep_1', name: 'A', configId: 'c', status: 'created' } },
       { body: { id: 'sweep_1', name: 'B', configId: 'c', status: 'created' } },
       { body: { message: 'ok' } },
@@ -46,31 +46,31 @@ describe('SweepsResource', () => {
 
   it('run', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { runId: 'srun_1', sweepId: 'sweep_1', status: 'running' } },
+      { body: { id: 'srun_1', sweepId: 'sweep_1', status: 'running' } },
     ]);
     const c = client(fetch);
     const r = await c.sweeps.run('sweep_1');
-    expect(r.runId).toBe('srun_1');
+    expect(r.id).toBe('srun_1');
     expect(calls[0].url).toContain('/testing/sweeps/sweep_1/run');
   });
 
   it('runs', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ runId: 'srun_1', status: 'completed' }], nextToken: null } },
+      { body: { runs: [{ id: 'srun_1', status: 'completed' }] } },
     ]);
     const c = client(fetch);
     const out = [];
     for await (const r of c.sweeps.runs('sweep_1')) out.push(r);
-    expect(out[0].runId).toBe('srun_1');
+    expect(out[0].id).toBe('srun_1');
     expect(calls[0].url).toContain('/testing/sweeps/sweep_1/runs');
   });
 
   it('listRuns + getRun', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ runId: 'srun_1', sweepId: 'sweep_1', status: 'completed' }], nextToken: null } },
+      { body: { runs: [{ id: 'srun_1', sweepId: 'sweep_1', status: 'completed' }] } },
       {
         body: {
-          runId: 'srun_1',
+          id: 'srun_1',
           sweepId: 'sweep_1',
           status: 'completed',
           results: [{ variation: { dtmfOption: '1' }, result: 'pass' }],
@@ -80,15 +80,15 @@ describe('SweepsResource', () => {
     const c = client(fetch);
     const out = [];
     for await (const r of c.sweeps.listRuns()) out.push(r);
-    expect(out[0].runId).toBe('srun_1');
+    expect(out[0].id).toBe('srun_1');
     const r = await c.sweeps.getRun('srun_1');
     expect(r.results?.[0].result).toBe('pass');
   });
 
   it('waitForRun returns on terminal', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { runId: 'srun_1', sweepId: 'sweep_1', status: 'running' } },
-      { body: { runId: 'srun_1', sweepId: 'sweep_1', status: 'completed' } },
+      { body: { id: 'srun_1', sweepId: 'sweep_1', status: 'running' } },
+      { body: { id: 'srun_1', sweepId: 'sweep_1', status: 'completed' } },
     ]);
     const c = client(fetch);
     const r = await c.sweeps.waitForRun('srun_1', { timeout: 5000, pollInterval: 1 });
@@ -98,7 +98,7 @@ describe('SweepsResource', () => {
   it('waitForRun times out', async () => {
     const { fetch } = makeQueuedFetch(
       Array.from({ length: 50 }, () => ({
-        body: { runId: 'srun_1', sweepId: 'sweep_1', status: 'running' },
+        body: { id: 'srun_1', sweepId: 'sweep_1', status: 'running' },
       }))
     );
     const c = client(fetch);

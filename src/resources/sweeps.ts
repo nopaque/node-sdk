@@ -36,6 +36,7 @@ export class SweepsResource extends Resource {
       fetchPage: async (p) =>
         await this.transport.request('GET', '/testing/sweeps', { params: p, requestOptions }),
       params: { ...params },
+      itemsKey: 'sweeps',
     });
   }
 
@@ -43,10 +44,12 @@ export class SweepsResource extends Resource {
     params: SweepsListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<Sweep>> {
-    const raw = await this.transport.request<{ items: Sweep[]; nextToken: string | null }>(
-      'GET', '/testing/sweeps', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{
+      sweeps?: Sweep[];
+      items?: Sweep[];
+      nextToken?: string | null;
+    }>('GET', '/testing/sweeps', { params, requestOptions });
+    return new Page(raw.sweeps ?? raw.items ?? [], raw.nextToken ?? null);
   }
 
   async get(sweepId: string, requestOptions?: RequestOptions): Promise<Sweep> {
@@ -89,6 +92,7 @@ export class SweepsResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'runs',
     });
   }
 
@@ -103,6 +107,7 @@ export class SweepsResource extends Resource {
           requestOptions,
         }),
       params: { ...params },
+      itemsKey: 'runs',
     });
   }
 

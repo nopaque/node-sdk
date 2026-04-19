@@ -39,7 +39,7 @@ export interface SweepVariationResult {
 }
 
 export interface SweepRun {
-  runId: string;
+  id: string;
   sweepId?: string;
   status: SweepRunStatus;
   variations?: number;
@@ -47,5 +47,7 @@ export interface SweepRun {
   results?: SweepVariationResult[];
   startedAt?: string;
   completedAt?: string;
+  /** @deprecated use `id` */
+  runId?: string;
   [key: string]: unknown;
 }

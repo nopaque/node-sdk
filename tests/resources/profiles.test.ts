@@ -18,8 +18,8 @@ describe('ProfilesResource', () => {
 
   it('list paginates', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { items: [{ id: 'prof_1', name: 'A' }], nextToken: 't' } },
-      { body: { items: [{ id: 'prof_2', name: 'B' }], nextToken: null } },
+      { body: { profiles: [{ id: 'prof_1', name: 'A' }], nextToken: 't' } },
+      { body: { profiles: [{ id: 'prof_2', name: 'B' }], nextToken: null } },
     ]);
     const c = client(fetch);
     const out = [];
@@ -87,11 +87,11 @@ describe('ProfilesResource', () => {
 
   it('findByParameters with array of labels', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [{ id: 'prof_1', name: 'A', matchedLabels: ['account_number'] }] } },
+      { body: { profiles: [{ id: 'prof_1', name: 'A', matchedLabels: ['account_number'] }], count: 1 } },
     ]);
     const c = client(fetch);
     const res = await c.profiles.findByParameters({ labels: ['account_number', 'postcode'] });
-    expect(res.items[0].id).toBe('prof_1');
+    expect(res.profiles[0].id).toBe('prof_1');
     expect(calls[0].url).toContain('labels=account_number%2Cpostcode');
   });
 });
