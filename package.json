@@ -1,6 +1,6 @@
 {
   "name": "@nopaque/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official Node.js SDK for the Nopaque API",
   "license": "MIT",
   "author": "Nopaque <support@nopaque.co.uk>",
