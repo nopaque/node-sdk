@@ -15,13 +15,13 @@ describe('MappingResource', () => {
     const job = await c.mapping.create({
       name: 'Main',
       phoneNumber: '+441',
-      mappingMode: 'dtmf',
+      config: { mappingMode: 'dtmf' },
     });
     expect(job.id).toBe('map_1');
     expect(JSON.parse(calls[0].init.body as string)).toEqual({
       name: 'Main',
       phoneNumber: '+441',
-      mappingMode: 'dtmf',
+      config: { mappingMode: 'dtmf' },
     });
   });
 

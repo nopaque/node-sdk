@@ -23,7 +23,7 @@ const client = new Nopaque({ apiKey: process.env.NOPAQUE_API_KEY });
 const job = await client.mapping.create({
   name: 'Main IVR',
   phoneNumber: '+441234567890',
-  mappingMode: 'dtmf',
+  config: { mappingMode: 'dtmf' },
 });
 await client.mapping.start(job.id);
 const final = await client.mapping.waitForComplete(job.id);

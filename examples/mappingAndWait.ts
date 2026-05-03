@@ -8,7 +8,7 @@ const client = new Nopaque();
 const job = await client.mapping.create({
   name: 'Demo mapping',
   phoneNumber: PHONE_NUMBER,
-  mappingMode: 'dtmf',
+  config: { mappingMode: 'dtmf' },
 });
 console.log(`Created job ${job.id}`);
 
