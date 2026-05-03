@@ -32,6 +32,7 @@ export interface MappingJobConfig {
   voiceProfileId?: string;
   dataProfileId?: string;
   retryConfig?: RetryConfig;
+  mappingMode?: MappingMode;
 }
 
 export interface MappingJobStats {
@@ -48,7 +49,6 @@ export interface MappingJob {
   userId?: string;
   name: string;
   phoneNumber?: string;
-  mappingMode?: MappingMode;
   profileId?: string;
   status: JobStatus;
   config?: MappingJobConfig;
@@ -69,7 +69,6 @@ export interface MappingJob {
 export interface CreateMappingJobRequest {
   name: string;
   phoneNumber: string;
-  mappingMode: MappingMode;
   profileId?: string;
   config?: MappingJobConfig;
 }
@@ -77,7 +76,6 @@ export interface CreateMappingJobRequest {
 export interface UpdateMappingJobRequest {
   name?: string;
   phoneNumber?: string;
-  mappingMode?: MappingMode;
   config?: MappingJobConfig;
 }
 
