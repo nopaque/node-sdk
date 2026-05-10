@@ -69,6 +69,17 @@ describe('MappingResource', () => {
     expect(JSON.parse(calls[0].init.body as string)).toEqual({ jobId: 'map_1' });
   });
 
+  it('probe POSTs to /runs/{runId}/probe and returns the queue summary', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { message: 'Queued 3 security probe steps', probeCount: 3 } },
+    ]);
+    const c = client(fetch);
+    const result = await c.mapping.probe('map_1', 'run_1');
+    expect(result.probeCount).toBe(3);
+    expect(calls[0].url).toContain('/mapping/map_1/runs/run_1/probe');
+    expect(calls[0].init.method).toBe('POST');
+  });
+
   it('steps paginates', async () => {
     const { fetch } = makeQueuedFetch([
       {
@@ -127,13 +138,6 @@ describe('MappingResource', () => {
     await c.mapping.updatePath('map_1', '1>2', { label: 'First' });
     await c.mapping.deletePath('map_1', '1>2');
     await c.mapping.remap('map_1', '1>2');
-  });
-
-  it('probe', async () => {
-    const { fetch, calls } = makeQueuedFetch([{ body: { probed: true } }]);
-    const c = client(fetch);
-    await c.mapping.probe('map_1', 'r_1', { payload: { foo: 'bar' } });
-    expect(calls[0].url).toContain('/mapping/map_1/runs/r_1/probe');
   });
 
   it('waitForComplete returns once terminal', async () => {

@@ -10,6 +10,7 @@ import type {
   MappingRun,
   MappingStep,
   MappingTree,
+  ProbeResult,
   TreeFormat,
   UpdateMappingJobRequest,
 } from '../types/mapping.js';
@@ -82,6 +83,21 @@ export class MappingResource extends Resource {
       body: { jobId },
       requestOptions,
     });
+  }
+
+  // Trigger on-demand security-probe analysis on a completed mapping run.
+  // Returns the queue summary { message, probeCount }; poll the run / steps
+  // afterwards to see classified results land.
+  async probe(
+    jobId: string,
+    runId: string,
+    requestOptions?: RequestOptions,
+  ): Promise<ProbeResult> {
+    return await this.transport.request(
+      'POST',
+      `/mapping/${jobId}/runs/${runId}/probe`,
+      { requestOptions },
+    );
   }
 
   steps(
@@ -176,19 +192,6 @@ export class MappingResource extends Resource {
       'POST',
       `/mapping/${jobId}/remap/${encodeURIComponent(path)}`,
       { requestOptions }
-    );
-  }
-
-  async probe(
-    jobId: string,
-    runId: string,
-    body: Record<string, unknown> = {},
-    requestOptions?: RequestOptions
-  ): Promise<unknown> {
-    return await this.transport.request(
-      'POST',
-      `/mapping/${jobId}/runs/${runId}/probe`,
-      { body, requestOptions }
     );
   }
 

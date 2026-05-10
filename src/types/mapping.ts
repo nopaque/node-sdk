@@ -159,3 +159,8 @@ export interface MappingRun {
 }
 
 export type TreeFormat = 'tree' | 'flat';
+
+export interface ProbeResult {
+  message: string;
+  probeCount: number;
+}
