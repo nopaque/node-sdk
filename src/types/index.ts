@@ -8,3 +8,6 @@ export * from './sweeps.js';
 export * from './loadTesting.js';
 export * from './scheduler.js';
 export * from './enrichment.js';
+export * from './missionTests.js';
+export * from './missionTestConfigs.js';
+export * from './compliance.js';
