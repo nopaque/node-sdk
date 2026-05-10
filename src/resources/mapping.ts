@@ -195,19 +195,6 @@ export class MappingResource extends Resource {
     );
   }
 
-  async probe(
-    jobId: string,
-    runId: string,
-    body: Record<string, unknown> = {},
-    requestOptions?: RequestOptions
-  ): Promise<unknown> {
-    return await this.transport.request(
-      'POST',
-      `/mapping/${jobId}/runs/${runId}/probe`,
-      { body, requestOptions }
-    );
-  }
-
   async waitForComplete(
     jobId: string,
     opts: WaitForCompleteOptions = {}

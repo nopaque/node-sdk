@@ -140,13 +140,6 @@ describe('MappingResource', () => {
     await c.mapping.remap('map_1', '1>2');
   });
 
-  it('probe', async () => {
-    const { fetch, calls } = makeQueuedFetch([{ body: { probed: true } }]);
-    const c = client(fetch);
-    await c.mapping.probe('map_1', 'r_1', { payload: { foo: 'bar' } });
-    expect(calls[0].url).toContain('/mapping/map_1/runs/r_1/probe');
-  });
-
   it('waitForComplete returns once terminal', async () => {
     const { fetch } = makeQueuedFetch([
       { body: { id: 'map_1', name: 'x', status: 'running' } },
