@@ -6,6 +6,7 @@ import { DatasetsResource } from './resources/datasets.js';
 import { EnrichmentResource } from './resources/enrichment.js';
 import { LoadTestingResource } from './resources/loadTesting.js';
 import { MappingResource } from './resources/mapping.js';
+import { MissionTestConfigsResource } from './resources/missionTestConfigs.js';
 import { MissionTestsResource } from './resources/missionTests.js';
 import { ProfilesResource } from './resources/profiles.js';
 import { SchedulerResource } from './resources/scheduler.js';
@@ -24,6 +25,7 @@ export class Nopaque {
   readonly scheduler: SchedulerResource;
   readonly enrichment: EnrichmentResource;
   readonly missionTests: MissionTestsResource;
+  readonly missionTestConfigs: MissionTestConfigsResource;
 
   private readonly transport: Transport;
 
@@ -41,6 +43,7 @@ export class Nopaque {
     this.scheduler = new SchedulerResource(this.transport);
     this.enrichment = new EnrichmentResource(this.transport);
     this.missionTests = new MissionTestsResource(this.transport);
+    this.missionTestConfigs = new MissionTestConfigsResource(this.transport);
   }
 
   close(): void {
