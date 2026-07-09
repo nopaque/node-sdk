@@ -25,13 +25,83 @@ describe('MappingResource', () => {
     });
   });
 
-  it('get returns a job', async () => {
+  it('create forwards tags', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'map_1', name: 'Main', status: 'idle', tags: ['compliance-eu'] } },
+    ]);
+    const c = client(fetch);
+    const job = await c.mapping.create({
+      name: 'Main',
+      phoneNumber: '+441',
+      tags: ['compliance-eu'],
+    });
+    expect(job.tags).toEqual(['compliance-eu']);
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({
+      name: 'Main',
+      phoneNumber: '+441',
+      tags: ['compliance-eu'],
+    });
+  });
+
+  it('update forwards tags', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'map_1', name: 'x', status: 'idle', tags: ['eu'] } },
+    ]);
+    const c = client(fetch);
+    await c.mapping.update('map_1', { tags: ['eu'] });
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ tags: ['eu'] });
+  });
+
+  it('list sends filter params and reads slim items + nextCursor', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        body: {
+          items: [
+            { id: 'map_1', name: 'A', status: 'completed', runNumber: 3, tags: ['eu'] },
+          ],
+          nextCursor: 'CURSOR2',
+        },
+      },
+      { body: { items: [{ id: 'map_2', name: 'B', status: 'running' }], nextCursor: null } },
+    ]);
+    const c = client(fetch);
+    const out = [];
+    for await (const j of c.mapping.list({ status: 'completed', tag: 'eu' })) out.push(j);
+    expect(out.map((j) => j.id)).toEqual(['map_1', 'map_2']);
+    expect(out[0].runNumber).toBe(3);
+    expect(calls[0].url).toContain('status=completed');
+    expect(calls[0].url).toContain('tag=eu');
+    // second page follows nextCursor via the cursor query param
+    expect(calls[1].url).toContain('cursor=CURSOR2');
+  });
+
+  it('listPage returns nextToken from nextCursor', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { id: 'map_1', name: 'x', status: 'running' } },
+      { body: { items: [{ id: 'map_1', name: 'A', status: 'idle' }], nextCursor: 'NEXT' } },
+    ]);
+    const c = client(fetch);
+    const page = await c.mapping.listPage({ name: 'A' });
+    expect(page.items[0].id).toBe('map_1');
+    expect(page.nextToken).toBe('NEXT');
+  });
+
+  it('get returns a job with currentRun + runNumber', async () => {
+    const { fetch } = makeQueuedFetch([
+      {
+        body: {
+          id: 'map_1',
+          name: 'x',
+          status: 'running',
+          runNumber: 2,
+          currentRun: { id: 'run_2', status: 'running', runNumber: 2 },
+        },
+      },
     ]);
     const c = client(fetch);
     const job = await c.mapping.get('map_1');
     expect(job.status).toBe('running');
+    expect(job.runNumber).toBe(2);
+    expect(job.currentRun?.id).toBe('run_2');
   });
 
   it('update sends only provided fields', async () => {
@@ -112,6 +182,54 @@ describe('MappingResource', () => {
     const tree = await c.mapping.tree('map_1');
     expect(tree.tree?.stepId).toBe('s1');
     expect(calls[0].url).toContain('format=tree');
+  });
+
+  it('tree returns enrichment fields', async () => {
+    const { fetch } = makeQueuedFetch([
+      {
+        body: {
+          jobId: 'map_1',
+          runId: 'r1',
+          runNumber: 1,
+          status: 'completed',
+          tree: {
+            stepId: 's1',
+            depth: 0,
+            path: [],
+            status: 'completed',
+            isTerminal: false,
+            children: [],
+            stepType: 'voice',
+            voicePrompt: 'Welcome',
+            probeCategory: 'injection',
+            inputRequired: { type: 'pin', description: 'Enter PIN' },
+          },
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const tree = await c.mapping.tree('map_1');
+    expect(tree.runNumber).toBe(1);
+    expect(tree.tree?.stepType).toBe('voice');
+    expect(tree.tree?.inputRequired?.type).toBe('pin');
+  });
+
+  it('tree handles the empty-state envelope (tree: null)', async () => {
+    const { fetch } = makeQueuedFetch([
+      {
+        body: {
+          jobId: 'map_1',
+          status: 'idle',
+          tree: null,
+          reason: 'no_runs',
+          message: 'This job has not been started yet.',
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const tree = await c.mapping.tree('map_1');
+    expect(tree.tree).toBeNull();
+    expect(tree.reason).toBe('no_runs');
   });
 
   it('runs paginates', async () => {

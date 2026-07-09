@@ -123,6 +123,47 @@ describe('TestingResource runs', () => {
     expect(r.result).toBe('pass');
   });
 
+  it('list sends filters and follows nextCursor', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        body: {
+          runs: [{ id: 'run_1', workspaceId: 'w', runType: 'mission', status: 'completed', outcome: 'PASS', startedAt: '' }],
+          nextCursor: 'C2',
+        },
+      },
+      { body: { runs: [{ id: 'run_2', workspaceId: 'w', runType: 'mission', status: 'running', startedAt: '' }] } },
+    ]);
+    const c = client(fetch);
+    const out = [];
+    for await (const r of c.testing.runs.list({ runType: 'mission', outcome: 'PASS' })) out.push(r);
+    expect(out.map((r) => r.id)).toEqual(['run_1', 'run_2']);
+    expect(calls[0].url).toContain('runType=mission');
+    expect(calls[0].url).toContain('outcome=PASS');
+    expect(calls[1].url).toContain('cursor=C2');
+  });
+
+  it('aggregateRuns returns grouped counts', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { groups: [{ key: 'PASS', count: 4 }, { key: 'FAIL', count: 1 }], truncated: false, totalGroups: 2 } },
+    ]);
+    const c = client(fetch);
+    const res = await c.testing.aggregateRuns({ groupBy: 'outcome' });
+    expect(res.totalGroups).toBe(2);
+    expect(res.groups?.[0]).toEqual({ key: 'PASS', count: 4 });
+    expect(calls[0].url).toContain('/testing/runs/aggregate');
+    expect(calls[0].url).toContain('groupBy=outcome');
+  });
+
+  it('getMissionTestRun returns the mission-strict shape', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'mtr_1', workspaceId: 'w', status: 'completed', outcome: 'PASS', verdict: 'pass', startedAt: '' } },
+    ]);
+    const c = client(fetch);
+    const run = await c.testing.getMissionTestRun('mtr_1');
+    expect(run.verdict).toBe('pass');
+    expect(calls[0].url).toContain('/testing/mission-test-runs/mtr_1');
+  });
+
   it('waitForRun returns on terminal', async () => {
     const { fetch } = makeQueuedFetch([
       { body: { id: 'run_1', jobId: 'job_1', status: 'running' } },

@@ -1,4 +1,5 @@
 export * from './audio.js';
+export * from './telemetry.js';
 export * from './mapping.js';
 export * from './profiles.js';
 export * from './datasets.js';

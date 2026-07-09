@@ -5,6 +5,7 @@ import { waitFor } from '../polling.js';
 import type {
   CreateMappingJobRequest,
   MappingJob,
+  MappingJobListItem,
   MappingListParams,
   MappingPath,
   MappingRun,
@@ -26,10 +27,25 @@ export interface WaitForCompleteOptions {
 }
 
 export class MappingResource extends Resource {
-  list(params: MappingListParams = {}, requestOptions?: RequestOptions): Paginator<MappingJob> {
-    return new Paginator<MappingJob>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/mapping', { params: p, requestOptions }),
+  list(
+    params: MappingListParams = {},
+    requestOptions?: RequestOptions
+  ): Paginator<MappingJobListItem> {
+    return new Paginator<MappingJobListItem>({
+      fetchPage: async (p) => {
+        const { nextToken, cursor, ...rest } = p as MappingListParams & { nextToken?: string };
+        const raw = await this.transport.request<{
+          items?: MappingJobListItem[];
+          nextCursor?: string | null;
+          nextToken?: string | null;
+        }>('GET', '/mapping', {
+          params: { ...rest, cursor: cursor ?? nextToken },
+          requestOptions,
+        });
+        // Server returns nextCursor; nextToken is a back-compat alias. Normalise
+        // to nextToken so the Paginator can continue.
+        return { items: raw.items ?? [], nextToken: raw.nextCursor ?? raw.nextToken ?? null };
+      },
       params: { ...params },
     });
   }
@@ -37,11 +53,17 @@ export class MappingResource extends Resource {
   async listPage(
     params: MappingListParams = {},
     requestOptions?: RequestOptions
-  ): Promise<Page<MappingJob>> {
-    const raw = await this.transport.request<{ items: MappingJob[]; nextToken: string | null }>(
-      'GET', '/mapping', { params, requestOptions }
-    );
-    return new Page(raw.items, raw.nextToken);
+  ): Promise<Page<MappingJobListItem>> {
+    const { nextToken, cursor, ...rest } = params;
+    const raw = await this.transport.request<{
+      items?: MappingJobListItem[];
+      nextCursor?: string | null;
+      nextToken?: string | null;
+    }>('GET', '/mapping', {
+      params: { ...rest, cursor: cursor ?? nextToken },
+      requestOptions,
+    });
+    return new Page(raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);
   }
 
   async get(jobId: string, requestOptions?: RequestOptions): Promise<MappingJob> {

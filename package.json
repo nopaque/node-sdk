@@ -1,6 +1,6 @@
 {
   "name": "@nopaque/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Official Node.js SDK for the Nopaque API",
   "license": "MIT",
   "author": "Nopaque <support@nopaque.co.uk>",
@@ -10,7 +10,12 @@
   },
   "homepage": "https://nopaque.co.uk/docs/sdks",
   "bugs": "https://github.com/nopaque/node-sdk/issues",
-  "keywords": ["nopaque", "ivr", "sdk", "api"],
+  "keywords": [
+    "nopaque",
+    "ivr",
+    "sdk",
+    "api"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

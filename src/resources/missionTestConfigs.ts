@@ -4,7 +4,9 @@ import { Paginator, Page } from '../pagination.js';
 import type {
   CreateMissionTestConfigRequest,
   MissionTestConfig,
+  MissionTestConfigListItem,
   MissionTestConfigListParams,
+  UpdateMissionTestConfigRequest,
 } from '../types/missionTestConfigs.js';
 import type { MissionTestRun } from '../types/missionTests.js';
 
@@ -12,10 +14,22 @@ export class MissionTestConfigsResource extends Resource {
   list(
     params: MissionTestConfigListParams = {},
     requestOptions?: RequestOptions
-  ): Paginator<MissionTestConfig> {
-    return new Paginator<MissionTestConfig>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/testing/mission-test-configs', { params: p, requestOptions }),
+  ): Paginator<MissionTestConfigListItem> {
+    return new Paginator<MissionTestConfigListItem>({
+      fetchPage: async (p) => {
+        const { nextToken, cursor, ...rest } = p as MissionTestConfigListParams & {
+          nextToken?: string;
+        };
+        const raw = await this.transport.request<{
+          items?: MissionTestConfigListItem[];
+          nextCursor?: string | null;
+          nextToken?: string | null;
+        }>('GET', '/testing/mission-test-configs', {
+          params: { ...rest, cursor: cursor ?? nextToken },
+          requestOptions,
+        });
+        return { items: raw.items ?? [], nextToken: raw.nextCursor ?? raw.nextToken ?? null };
+      },
       params: { ...params },
     });
   }
@@ -23,13 +37,17 @@ export class MissionTestConfigsResource extends Resource {
   async listPage(
     params: MissionTestConfigListParams = {},
     requestOptions?: RequestOptions
-  ): Promise<Page<MissionTestConfig>> {
-    const raw = await this.transport.request<{ items: MissionTestConfig[]; nextToken: string | null }>(
-      'GET',
-      '/testing/mission-test-configs',
-      { params, requestOptions },
-    );
-    return new Page(raw.items, raw.nextToken);
+  ): Promise<Page<MissionTestConfigListItem>> {
+    const { nextToken, cursor, ...rest } = params;
+    const raw = await this.transport.request<{
+      items?: MissionTestConfigListItem[];
+      nextCursor?: string | null;
+      nextToken?: string | null;
+    }>('GET', '/testing/mission-test-configs', {
+      params: { ...rest, cursor: cursor ?? nextToken },
+      requestOptions,
+    });
+    return new Page(raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);
   }
 
   async create(
@@ -41,6 +59,17 @@ export class MissionTestConfigsResource extends Resource {
 
   async get(id: string, requestOptions?: RequestOptions): Promise<MissionTestConfig> {
     return await this.transport.request('GET', `/testing/mission-test-configs/${id}`, { requestOptions });
+  }
+
+  async update(
+    id: string,
+    body: UpdateMissionTestConfigRequest,
+    requestOptions?: RequestOptions
+  ): Promise<MissionTestConfig> {
+    return await this.transport.request('PATCH', `/testing/mission-test-configs/${id}`, {
+      body,
+      requestOptions,
+    });
   }
 
   async delete(id: string, requestOptions?: RequestOptions): Promise<void> {
