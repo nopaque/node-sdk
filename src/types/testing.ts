@@ -102,3 +102,115 @@ export interface TestRun {
 export type CreateTestRunRequest =
   | { jobId: string; testConfigId?: never }
   | { jobId?: never; testConfigId: string };
+
+export type TestRunType = 'mission' | 'compliance' | 'standard' | 'param';
+
+export type TestRunOutcome = 'PASS' | 'FAIL' | 'ERROR' | 'INCONCLUSIVE' | 'pending';
+
+/**
+ * Slim summary returned by `testing.runs.list()` / `testing.listRuns()`.
+ * No transcript/evidence — keeps the list payload light.
+ */
+export interface TestRunListItem {
+  id: string;
+  workspaceId: string;
+  runType: TestRunType;
+  configId?: string;
+  catalogueTestId?: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  outcome?: TestRunOutcome | null;
+  phoneNumber?: string;
+  mission?: string;
+  passedSteps?: number;
+  failedSteps?: number;
+  startedAt: string;
+  completedAt?: string;
+  /** Real call length in seconds (post-answer → last node), not orchestration wall-clock. */
+  callDurationSecs?: number;
+}
+
+/** Query params for the filtered+paginated `GET /testing/runs`. */
+export interface TestRunListParams {
+  /** @deprecated Legacy back-compat filter. */
+  jobId?: string;
+  runType?: TestRunType;
+  outcome?: TestRunOutcome;
+  phoneNumber?: string;
+  configId?: string;
+  catalogueTestId?: string;
+  /** ISO8601 datetime. */
+  startedAfter?: string;
+  /** ISO8601 datetime. */
+  startedBefore?: string;
+  sortBy?: 'startedAt' | 'completedAt';
+  sortDir?: 'asc' | 'desc';
+  /** Results per page (1..200, default 50). */
+  limit?: number;
+  /** Opaque pagination cursor. */
+  cursor?: string;
+  /** @deprecated Back-compat alias for `cursor`. */
+  nextToken?: string;
+}
+
+export type AggregateGroupBy =
+  | 'outcome'
+  | 'runType'
+  | 'configId'
+  | 'catalogueTestId'
+  | 'phoneNumber';
+
+export type AggregateTimeBucket = 'day' | 'week' | 'month';
+
+/** Query params for `GET /testing/runs/aggregate`. `groupBy` is required. */
+export interface TestRunAggregateParams {
+  runType?: TestRunType;
+  outcome?: TestRunOutcome;
+  phoneNumber?: string;
+  configId?: string;
+  catalogueTestId?: string;
+  startedAfter?: string;
+  startedBefore?: string;
+  groupBy: AggregateGroupBy;
+  timeBucket?: AggregateTimeBucket;
+}
+
+export interface AggregateGroup {
+  key: string;
+  count: number;
+}
+
+export interface TestRunAggregateResponse {
+  groups?: AggregateGroup[];
+  buckets?: Array<{ bucket: string; groups: AggregateGroup[] }>;
+  truncated: boolean;
+  totalGroups: number;
+}
+
+/**
+ * Mission-strict response for `GET /testing/mission-test-runs/{id}`.
+ * No stepResults — mission tests have no steps.
+ */
+export interface MissionTestRunResponse {
+  id: string;
+  workspaceId: string;
+  configId?: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  outcome?: TestRunOutcome | null;
+  sector?: string;
+  mission?: string;
+  acceptance?: string;
+  passed?: boolean;
+  passReasoning?: string;
+  passEvidence?: unknown;
+  verdict?: 'pass' | 'fail';
+  complianceFailEvidence?: unknown[];
+  compliancePassEvidence?: unknown[];
+  judgeReasoning?: string;
+  transcript?: unknown;
+  phoneNumber?: string;
+  audioId?: string;
+  callControlId?: string;
+  startedAt: string;
+  completedAt?: string;
+  errorMessage?: string;
+}

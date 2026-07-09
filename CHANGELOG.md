@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-07-09
+
+### Added
+
+All changes are additive and backward-compatible with existing signatures.
+
+- **Mapping**
+  - `tags?: string[]` on `CreateMappingJobRequest`, `UpdateMappingJobRequest`,
+    and the `MappingJob` response type.
+  - `mapping.list()` now accepts the full server filter + pagination surface:
+    `phoneNumber`, `name`, `profileId`, `tag`, `status`, `createdAfter`,
+    `createdBefore`, `sort`, `sortDir`, `limit`, `cursor`. It returns slim
+    `MappingJobListItem` values and reads `nextCursor` (falling back to the
+    `nextToken` back-compat alias) for pagination.
+  - Single-job response (`mapping.get()`) gains `runNumber?` and a nested
+    `currentRun?` summary (omitted, never null, when the job has no run).
+  - Tree nodes gain the enrichment fields (`stepType`, `voicePrompt`,
+    `menuLabel`, `spokenResponse`, `probeCategory`, `probeClassification`,
+    `probeRationale`, `audioUrl`, `duration`, `inputRequired`), tree/flat-tree
+    responses gain `runNumber?`, and the empty-state envelope
+    (`tree: null` + `reason`/`message`) is now typed — branch on `tree === null`.
+  - New permissive `CallTelemetry` / `TurnTelemetry` types (all fields optional,
+    unknown keys tolerated); `callTelemetry?` may appear on `MappingRun` and
+    `turnTelemetry?` on step results.
+- **Testing**
+  - `testing.runs.list()` (and the `testing.listRuns()` alias) gain filter +
+    pagination params (`jobId`, `runType`, `outcome`, `phoneNumber`, `configId`,
+    `catalogueTestId`, `startedAfter`, `startedBefore`, `sortBy`, `sortDir`,
+    `limit`, `cursor`), returning slim `TestRunListItem` values with `nextCursor`.
+  - `testing.aggregateRuns(params)` for `GET /testing/runs/aggregate`.
+  - `testing.getMissionTestRun(id)` for `GET /testing/mission-test-runs/{id}`.
+- **Mission test configs**
+  - `tags?: string[]` on `MissionTestConfig` and `CreateMissionTestConfigRequest`,
+    plus `description?` and `phoneNumber?`.
+  - `missionTestConfigs.update(id, body)` (PATCH partial update; `description`
+    and `tags` accept `null` to clear).
+  - `missionTestConfigs.list()` gains filter + pagination params
+    (`name`, `phoneNumber`, `sector`, `profileId`, `tag`, `createdAfter`,
+    `createdBefore`, `sort`, `sortDir`, `limit`, `cursor`) and returns slim
+    `MissionTestConfigListItem` values.
+
 ## [0.1.2] - 2026-05-03
 
 ### Fixed

@@ -39,14 +39,44 @@ describe('MissionTestConfigsResource', () => {
     });
   });
 
-  it('list returns a paginator', async () => {
-    const { fetch } = makeQueuedFetch([
-      { body: { items: [cfgFixture], nextToken: null } },
+  it('create forwards tags', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { ...cfgFixture, tags: ['finance-uk'] } }]);
+    const c = client(fetch);
+    const cfg = await c.missionTestConfigs.create({
+      name: 'qa',
+      sector: 'insurance',
+      mission: 'm',
+      acceptance: 'a',
+      profileId: 'p_1',
+      tags: ['finance-uk'],
+    });
+    expect(cfg.tags).toEqual(['finance-uk']);
+    expect(JSON.parse(calls[0].init.body as string).tags).toEqual(['finance-uk']);
+  });
+
+  it('list returns slim items, sends filters and follows nextCursor', async () => {
+    const slim = { id: 'cfg_1', workspaceId: 'w', name: 'qa', sector: 'insurance', profileId: 'p_1', createdAt: '', updatedAt: '' };
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { items: [slim], nextCursor: 'C2' } },
+      { body: { items: [{ ...slim, id: 'cfg_2' }], nextCursor: null } },
     ]);
     const c = client(fetch);
     const ids: string[] = [];
-    for await (const cfg of c.missionTestConfigs.list()) ids.push(cfg.id);
-    expect(ids).toEqual(['cfg_1']);
+    for await (const cfg of c.missionTestConfigs.list({ sector: 'insurance', tag: 'finance-uk' })) ids.push(cfg.id);
+    expect(ids).toEqual(['cfg_1', 'cfg_2']);
+    expect(calls[0].url).toContain('sector=insurance');
+    expect(calls[0].url).toContain('tag=finance-uk');
+    expect(calls[1].url).toContain('cursor=C2');
+  });
+
+  it('update PATCHes the config', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { ...cfgFixture, name: 'renamed' } }]);
+    const c = client(fetch);
+    const cfg = await c.missionTestConfigs.update('cfg_1', { name: 'renamed', tags: null });
+    expect(cfg.name).toBe('renamed');
+    expect(calls[0].init.method).toBe('PATCH');
+    expect(calls[0].url).toContain('/testing/mission-test-configs/cfg_1');
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ name: 'renamed', tags: null });
   });
 
   it('get returns a config', async () => {

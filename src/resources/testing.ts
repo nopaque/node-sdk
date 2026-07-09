@@ -7,10 +7,15 @@ import type {
   CreateTestConfigRequest,
   CreateTestJobRequest,
   CreateTestRunRequest,
+  MissionTestRunResponse,
   TestConfig,
   TestingListParams,
   TestJob,
   TestRun,
+  TestRunAggregateParams,
+  TestRunAggregateResponse,
+  TestRunListItem,
+  TestRunListParams,
   UpdateTestConfigRequest,
 } from '../types/testing.js';
 
@@ -140,32 +145,57 @@ export class TestingRunsResource extends Resource {
   }
 
   list(
-    params: TestingListParams = {},
+    params: TestRunListParams = {},
     requestOptions?: RequestOptions
-  ): Paginator<TestRun> {
-    return new Paginator<TestRun>({
+  ): Paginator<TestRunListItem> {
+    return new Paginator<TestRunListItem>({
       fetchPage: async (p) => {
-        // Server returns { runs: [...] } rather than { items, nextToken }.
+        const { nextToken, cursor, ...rest } = p as TestRunListParams & { nextToken?: string };
+        // Server returns { runs: [...], nextCursor? } rather than { items, nextToken }.
         const raw = await this.transport.request<{
-          runs?: TestRun[];
-          items?: TestRun[];
-        }>('GET', '/testing/runs', { params: p, requestOptions });
-        return { items: raw.runs ?? raw.items ?? [], nextToken: null };
+          runs?: TestRunListItem[];
+          items?: TestRunListItem[];
+          nextCursor?: string | null;
+          nextToken?: string | null;
+        }>('GET', '/testing/runs', {
+          params: { ...rest, cursor: cursor ?? nextToken },
+          requestOptions,
+        });
+        return {
+          items: raw.runs ?? raw.items ?? [],
+          nextToken: raw.nextCursor ?? raw.nextToken ?? null,
+        };
       },
       params: { ...params },
     });
   }
 
   async listPage(
-    params: TestingListParams = {},
+    params: TestRunListParams = {},
     requestOptions?: RequestOptions
-  ): Promise<Page<TestRun>> {
+  ): Promise<Page<TestRunListItem>> {
+    const { nextToken, cursor, ...rest } = params;
     const raw = await this.transport.request<{
-      runs?: TestRun[];
-      items?: TestRun[];
+      runs?: TestRunListItem[];
+      items?: TestRunListItem[];
+      nextCursor?: string | null;
       nextToken?: string | null;
-    }>('GET', '/testing/runs', { params, requestOptions });
-    return new Page(raw.runs ?? raw.items ?? [], raw.nextToken ?? null);
+    }>('GET', '/testing/runs', {
+      params: { ...rest, cursor: cursor ?? nextToken },
+      requestOptions,
+    });
+    return new Page(raw.runs ?? raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);
+  }
+
+  /** GET /testing/runs/aggregate — grouped counts over test runs. */
+  async aggregate(
+    params: TestRunAggregateParams,
+    requestOptions?: RequestOptions
+  ): Promise<TestRunAggregateResponse> {
+    return await this.transport.request('GET', '/testing/runs/aggregate', {
+      params,
+      requestOptions,
+    });
   }
 
   async get(runId: string, requestOptions?: RequestOptions): Promise<TestRun> {
@@ -197,5 +227,31 @@ export class TestingResource extends Resource {
     this.configs = new TestingConfigsResource(transport);
     this.jobs = new TestingJobsResource(transport);
     this.runs = new TestingRunsResource(transport);
+  }
+
+  /** Paginated, filtered list of test runs (alias for `testing.runs.list()`). */
+  listRuns(
+    params: TestRunListParams = {},
+    requestOptions?: RequestOptions
+  ): Paginator<TestRunListItem> {
+    return this.runs.list(params, requestOptions);
+  }
+
+  /** GET /testing/runs/aggregate — grouped counts over test runs. */
+  async aggregateRuns(
+    params: TestRunAggregateParams,
+    requestOptions?: RequestOptions
+  ): Promise<TestRunAggregateResponse> {
+    return await this.runs.aggregate(params, requestOptions);
+  }
+
+  /** GET /testing/mission-test-runs/{id} — mission-strict run detail (no steps). */
+  async getMissionTestRun(
+    id: string,
+    requestOptions?: RequestOptions
+  ): Promise<MissionTestRunResponse> {
+    return await this.transport.request('GET', `/testing/mission-test-runs/${id}`, {
+      requestOptions,
+    });
   }
 }
