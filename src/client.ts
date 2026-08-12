@@ -4,6 +4,7 @@ import { AudioResource } from './resources/audio.js';
 import { BatchesResource } from './resources/batches.js';
 import { ComplianceResource } from './resources/compliance.js';
 import { DatasetsResource } from './resources/datasets.js';
+import { DigitalTestingResource } from './resources/digitalTesting.js';
 import { EnrichmentResource } from './resources/enrichment.js';
 import { LoadTestingResource } from './resources/loadTesting.js';
 import { MappingResource } from './resources/mapping.js';
@@ -28,6 +29,7 @@ export class Nopaque {
   readonly missionTests: MissionTestsResource;
   readonly missionTestConfigs: MissionTestConfigsResource;
   readonly compliance: ComplianceResource;
+  readonly digitalTesting: DigitalTestingResource;
 
   private readonly transport: Transport;
 
@@ -47,6 +49,7 @@ export class Nopaque {
     this.missionTests = new MissionTestsResource(this.transport);
     this.missionTestConfigs = new MissionTestConfigsResource(this.transport);
     this.compliance = new ComplianceResource(this.transport);
+    this.digitalTesting = new DigitalTestingResource(this.transport);
   }
 
   close(): void {
