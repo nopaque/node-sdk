@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-12
+
+### Added
+
+- Digital (chat channel) testing, in beta. Access is limited to beta workspaces
+  during the beta period.
+  - `client.digitalTesting` — create, list, get, cancel and wait for digital test runs.
+  - `client.digitalTestConfigs` — save, update, delete and launch reusable digital test configs.
+  - `client.digitalCompliance` — list digital compliance audits and fetch a per-target report.
+- `client.testing.listVoices()` — the operator-enabled voices a mission test may
+  use, and which is the default.
+
 ## [0.3.0] - 2026-07-09
 
 ### Added
