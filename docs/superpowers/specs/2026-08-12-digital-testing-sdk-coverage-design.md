@@ -56,6 +56,13 @@ Three flat resources rather than one large resource or nested sub-objects. This
 mirrors the existing `missionTests` / `missionTestConfigs` split, where runs and
 their saved configs are separate top-level resources.
 
+Nesting was considered and rejected. It is an established pattern here -
+`TestingResource` nests `configs`, `jobs` and `runs` and adds flat aliases that
+delegate down (`node-sdk/src/resources/testing.ts:220-238`, mirrored at
+`python-sdk/src/nopaque/resources/testing.py:402-409`). Digital compliance audits
+are a different domain from digital runs, so three top-level resources keeps each
+one small and single-purpose.
+
 | Resource | Methods |
 | --- | --- |
 | `digitalTesting` | `list`, `create`, `get`, `cancel`, `waitForRun` |
@@ -66,11 +73,33 @@ their saved configs are separate top-level resources.
 resource. The spec tags `/testing/voices` under Mission Tests and it is not a
 beta operation.
 
+### Type inventory
+
+The first draft of this design said "seven schemas". That was an undercount taken
+from the top-level schema names. The real surface, after following the `$ref`s:
+
+| Group | Types |
+| --- | --- |
+| Target union | `DigitalTarget` (discriminated on `transport`), `ConnectChatTarget`, `HttpJsonTarget`, `WebWidgetTarget` |
+| Step union | `ChatStep` (discriminated on `type`), `SendChatStep`, `ExpectChatStep`, `WaitChatStep`, `EndChatStep` |
+| Core | `DigitalProfile`, `DigitalStepResult`, `DigitalSample`, `DigitalTestRun`, `DigitalTestConfigBase`, `DigitalTestConfig` |
+| Request / response | `CreateDigitalTestRunResponse`, `ListDigitalTestRunsResponse`, `ListDigitalTestConfigsResponse`, `LaunchDigitalTestConfigRequest`, `DigitalComplianceAuditSummary`, `ListDigitalComplianceAuditsResponse` |
+| Voices | `Voice`, `ListVoicesResponse` |
+
+Roughly 21 types. Two are discriminated unions, which in Python need
+`Annotated[Union[...], Field(discriminator=...)]` under Pydantic v2 - and, on the
+3.9 target, written without PEP 604 syntax.
+
+`DigitalComplianceAuditSummary` and `ListDigitalComplianceAuditsResponse` are
+inline in the OpenAPI document rather than named components. The SDK names them.
+Their fields are `targetRef`, `lastRunAt`, `runCount`, `catalogueTestIds`, all
+required.
+
 ### Node SDK
 
 | File | Change |
 | --- | --- |
-| `src/types/digitalTesting.ts` | New. `DigitalTarget`, `DigitalProfile`, `DigitalStepResult`, `DigitalSample`, `DigitalTestRun`, `DigitalTestConfigBase`, `DigitalTestConfig`, plus request and list-params types. |
+| `src/types/digitalTesting.ts` | New. See the type inventory below - roughly 21 types, including two discriminated unions. |
 | `src/types/testing.ts` | Add `ListVoicesResponse` and its `Voice` element type. |
 | `src/types/index.ts` | Re-export the new module. |
 | `src/resources/digitalTesting.ts` | New resource class. |
@@ -114,10 +143,22 @@ exist for this reason. Line length 100. Version lives only in `_version.py`.
 The digital-testing list endpoints use `cursor` as the request param and return
 `nextCursor`. The shared paginators in both SDKs still thread `nextToken`.
 
-Bridge inside each `fetchPage`: send `cursor ?? nextToken`, read
-`nextCursor ?? nextToken`. This is what `mapping` and `testing` already do. **Do
-not change the shared paginator** - it is on the token contract for every other
-resource.
+There is a third difference the SDKs must absorb: the collection key. The
+response is `{ runs: [...], nextCursor? }`, not `{ items, nextToken }`. The
+paginator already anticipates this - `PaginatorOptions.itemsKey` selects a
+resource-named key and falls back to `items`.
+
+`TestingRunsResource.list` (`node-sdk/src/resources/testing.ts:147-171`) is the
+exact template: destructure `nextToken` and `cursor` out of the params, send
+`cursor: cursor ?? nextToken`, and return
+`{ items: raw.runs ?? raw.items ?? [], nextToken: raw.nextCursor ?? raw.nextToken ?? null }`.
+Copy that shape rather than inventing a new one.
+
+**Do not change the shared paginator** - it is on the token contract for every
+other resource.
+
+`nextCursor` is omitted rather than null on the last page, so a truthiness check
+terminates correctly.
 
 ### 2. `getReport` takes `targetRef` as a query param, not a path segment
 
