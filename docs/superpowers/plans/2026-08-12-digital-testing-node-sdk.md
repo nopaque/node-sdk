@@ -661,11 +661,10 @@ In `src/client.ts`, add the import alongside the other resource imports, then th
     this.digitalTesting = new DigitalTestingResource(this.transport);
 ```
 
-In `src/index.ts`, export the resource class alongside the others:
-
-```ts
-export { DigitalTestingResource } from './resources/digitalTesting.js';
-```
+Do NOT export the resource class from `src/index.ts`. This SDK exports no
+resource classes at all - `MappingResource`, `ComplianceResource` and the rest
+are reachable only via `client.<name>`. Adding one would widen the published API
+surface with a novel export.
 
 - [ ] **Step 5: Run the tests and confirm they pass**
 
@@ -686,7 +685,7 @@ git commit -m "feat(digital-testing): add run resource with cursor pagination an
 **Files:**
 - Create: `src/resources/digitalTestConfigs.ts`
 - Create: `tests/resources/digitalTestConfigs.test.ts`
-- Modify: `src/client.ts`, `src/index.ts`
+- Modify: `src/client.ts`
 
 **Interfaces:**
 - Consumes: types from Task 1; `DigitalTestRun` for the `launch` return.
@@ -950,11 +949,10 @@ In `src/client.ts`:
     this.digitalTestConfigs = new DigitalTestConfigsResource(this.transport);
 ```
 
-In `src/index.ts`:
-
-```ts
-export { DigitalTestConfigsResource } from './resources/digitalTestConfigs.js';
-```
+Do NOT export the resource class from `src/index.ts`. This SDK exports no
+resource classes at all - `MappingResource`, `ComplianceResource` and the rest
+are reachable only via `client.<name>`. Adding one would widen the published API
+surface with a novel export.
 
 - [ ] **Step 5: Run the tests and confirm they pass**
 
@@ -964,7 +962,7 @@ Expected: PASS, 6 tests.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/resources/digitalTestConfigs.ts src/client.ts src/index.ts tests/resources/digitalTestConfigs.test.ts
+git add src/resources/digitalTestConfigs.ts src/client.ts tests/resources/digitalTestConfigs.test.ts
 git commit -m "feat(digital-testing): add saved config resource"
 ```
 
@@ -975,7 +973,7 @@ git commit -m "feat(digital-testing): add saved config resource"
 **Files:**
 - Create: `src/resources/digitalCompliance.ts`
 - Create: `tests/resources/digitalCompliance.test.ts`
-- Modify: `src/client.ts`, `src/index.ts`
+- Modify: `src/client.ts`
 
 **Interfaces:**
 - Consumes: `DigitalComplianceAuditSummary` from Task 1.
@@ -1098,11 +1096,10 @@ In `src/client.ts`:
     this.digitalCompliance = new DigitalComplianceResource(this.transport);
 ```
 
-In `src/index.ts`:
-
-```ts
-export { DigitalComplianceResource } from './resources/digitalCompliance.js';
-```
+Do NOT export the resource class from `src/index.ts`. This SDK exports no
+resource classes at all - `MappingResource`, `ComplianceResource` and the rest
+are reachable only via `client.<name>`. Adding one would widen the published API
+surface with a novel export.
 
 - [ ] **Step 5: Run the tests and confirm they pass**
 
@@ -1112,7 +1109,7 @@ Expected: PASS, 2 tests.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/resources/digitalCompliance.ts src/client.ts src/index.ts tests/resources/digitalCompliance.test.ts
+git add src/resources/digitalCompliance.ts src/client.ts tests/resources/digitalCompliance.test.ts
 git commit -m "feat(digital-testing): add compliance audit resource"
 ```
 
@@ -1137,8 +1134,8 @@ pnpm build
 node ./tests/smoke/verify-exports.mjs
 ```
 
-Expected: all five pass. The exports check matters most here — Tasks 3-5 each
-changed `src/index.ts`, and this is what proves the CJS path still resolves.
+Expected: all five pass. Tasks 3-5 add resources to `src/client.ts` without
+touching the export surface; the smoke check proves the CJS path still resolves.
 
 - [ ] **Step 2: Bump the version**
 
