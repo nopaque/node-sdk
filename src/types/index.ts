@@ -12,3 +12,4 @@ export * from './enrichment.js';
 export * from './missionTests.js';
 export * from './missionTestConfigs.js';
 export * from './compliance.js';
+export * from './digitalTesting.js';

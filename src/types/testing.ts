@@ -214,3 +214,21 @@ export interface MissionTestRunResponse {
   completedAt?: string;
   errorMessage?: string;
 }
+
+export interface Voice {
+  id: string;
+  name?: string;
+  provider?: string;
+  language?: string;
+  isDefault?: boolean;
+}
+
+/** Response for `GET /testing/voices`. */
+export interface ListVoicesResponse {
+  voices: Voice[];
+  /**
+   * Which voice is used when a mission test does not choose one. Absent only
+   * if no voice is flagged default.
+   */
+  defaultVoiceId?: string;
+}
