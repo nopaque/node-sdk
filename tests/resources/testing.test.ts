@@ -195,8 +195,20 @@ describe('TestingResource.listVoices', () => {
     const { fetch, calls } = makeQueuedFetch([
       {
         body: {
-          voices: [{ id: 'v1', name: 'Ultra', isDefault: true }],
-          defaultVoiceId: 'v1',
+          // Shape and values transcribed from the OpenAPI `Voice` examples.
+          voices: [
+            {
+              voiceId: 'Telnyx.Ultra.c8f7835e-28a3-4f0c-80d7-c1302ac62aae',
+              name: 'Alistair',
+              language: 'en-GB',
+              accent: 'British',
+              gender: 'male',
+              provider: 'telnyx',
+              label: 'Warm British male narrator.',
+              isDefault: true,
+            },
+          ],
+          defaultVoiceId: 'Telnyx.Ultra.c8f7835e-28a3-4f0c-80d7-c1302ac62aae',
         },
       },
     ]);
@@ -205,6 +217,9 @@ describe('TestingResource.listVoices', () => {
     expect(calls[0].url).toContain('/testing/voices');
     expect(calls[0].init.method).toBe('GET');
     expect(r.voices).toHaveLength(1);
-    expect(r.defaultVoiceId).toBe('v1');
+    expect(r.voices[0].voiceId).toBe('Telnyx.Ultra.c8f7835e-28a3-4f0c-80d7-c1302ac62aae');
+    expect(r.voices[0].name).toBe('Alistair');
+    expect(r.voices[0].accent).toBe('British');
+    expect(r.defaultVoiceId).toBe('Telnyx.Ultra.c8f7835e-28a3-4f0c-80d7-c1302ac62aae');
   });
 });

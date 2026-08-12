@@ -7,6 +7,7 @@ function client(fetch: typeof globalThis.fetch) {
   return new Nopaque({ apiKey: 'k', fetch, maxRetries: 0 });
 }
 
+// Fixtures follow the OpenAPI schemas' documented shapes and examples.
 function cfg(over: Partial<DigitalTestConfig> = {}): DigitalTestConfig {
   return {
     id: 'c1',
@@ -15,8 +16,9 @@ function cfg(over: Partial<DigitalTestConfig> = {}): DigitalTestConfig {
     targetRef: 'acme/billing-bot',
     target: { transport: 'web-widget', url: 'https://example.com/support' },
     sector: 'utilities',
-    mission: 'check the bill',
+    mission: 'Pay my bill',
     kind: 'freeform',
+    acceptance: 'The bot states the outstanding balance.',
     createdAt: '2026-08-12T00:00:00Z',
     updatedAt: '2026-08-12T00:00:00Z',
     ...over,
@@ -31,6 +33,8 @@ describe('DigitalTestConfigsResource', () => {
       name: 'Billing bot smoke',
       targetRef: 'acme/billing-bot',
       target: { transport: 'web-widget', url: 'https://example.com/support' },
+      sector: 'utilities',
+      mission: 'Pay my bill',
     });
     expect(calls[0].init.method).toBe('POST');
     expect(calls[0].url).toContain('/digital-testing/configs');
@@ -94,5 +98,42 @@ describe('DigitalTestConfigsResource', () => {
     for await (const item of c.digitalTestConfigs.list()) seen.push(item.id);
     expect(seen).toEqual(['c1', 'c2']);
     expect(calls[1].url).toContain('cursor=c2');
+  });
+
+  it('list advances past a caller-supplied cursor rather than repeating page one', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { configs: [cfg({ id: 'c1' })], nextCursor: 'c2' } },
+      { body: { configs: [cfg({ id: 'c2' })], nextCursor: 'c3' } },
+      { body: { configs: [cfg({ id: 'c3' })] } },
+    ]);
+    const c = client(fetch);
+    const seen: string[] = [];
+    for await (const item of c.digitalTestConfigs.list({ cursor: 'c1' })) seen.push(item.id);
+    expect(seen).toEqual(['c1', 'c2', 'c3']);
+    expect(calls.map((call) => new URL(call.url).searchParams.get('cursor'))).toEqual([
+      'c1',
+      'c2',
+      'c3',
+    ]);
+  });
+
+  it('listPage maps configs and nextCursor onto the Page shape', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { configs: [cfg()], nextCursor: 'c2' } },
+    ]);
+    const c = client(fetch);
+    const page = await c.digitalTestConfigs.listPage({ limit: 1 });
+    expect(calls[0].url).toContain('/digital-testing/configs');
+    expect(calls[0].url).toContain('limit=1');
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0].id).toBe('c1');
+    expect(page.nextToken).toBe('c2');
+  });
+
+  it('listPage reports a null nextToken on the last page, where nextCursor is OMITTED', async () => {
+    const { fetch } = makeQueuedFetch([{ body: { configs: [cfg()] } }]);
+    const c = client(fetch);
+    const page = await c.digitalTestConfigs.listPage();
+    expect(page.nextToken).toBeNull();
   });
 });

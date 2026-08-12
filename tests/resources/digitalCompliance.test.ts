@@ -29,6 +29,13 @@ describe('DigitalComplianceResource', () => {
     expect(r[0].runCount).toBe(4);
   });
 
+  it('listAudits falls back to an empty array when `audits` is absent', async () => {
+    const { fetch } = makeQueuedFetch([{ body: {} }]);
+    const c = client(fetch);
+    const r = await c.digitalCompliance.listAudits();
+    expect(r).toEqual([]);
+  });
+
   it('getReport sends targetRef as a QUERY param, never a path segment', async () => {
     const { fetch, calls } = makeQueuedFetch([{ body: { targetRef: 'acme/billing-bot' } }]);
     const c = client(fetch);
@@ -37,5 +44,19 @@ describe('DigitalComplianceResource', () => {
     expect(calls[0].url).toContain('/digital-testing/compliance-audits/report');
     expect(calls[0].url).toContain('targetRef=acme%2Fbilling-bot');
     expect(calls[0].url).not.toContain('report/acme');
+  });
+
+  it('getReport passes the optional sector filter through', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { targetRef: 'acme/billing-bot' } }]);
+    const c = client(fetch);
+    await c.digitalCompliance.getReport('acme/billing-bot', { sector: 'utilities' });
+    expect(calls[0].url).toContain('sector=utilities');
+  });
+
+  it('getReport omits sector when it is not supplied', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { targetRef: 'acme/billing-bot' } }]);
+    const c = client(fetch);
+    await c.digitalCompliance.getReport('acme/billing-bot');
+    expect(calls[0].url).not.toContain('sector=');
   });
 });
