@@ -43,6 +43,9 @@ Access is limited to beta workspaces during the beta period.
 const run = await client.digitalTesting.create({
   targetRef: 'acme/billing-bot',
   target: { transport: 'web-widget', url: 'https://example.com/support' },
+  // `sector` and `mission` are required on every digital run.
+  sector: 'utilities',
+  mission: 'Pay my bill',
   kind: 'freeform',
   acceptance: 'The bot states the outstanding balance.',
 });
