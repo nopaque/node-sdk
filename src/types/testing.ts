@@ -214,3 +214,33 @@ export interface MissionTestRunResponse {
   completedAt?: string;
   errorMessage?: string;
 }
+
+/**
+ * An operator-enabled Telnyx text-to-speech voice. Customers choose from this
+ * curated set rather than the full Telnyx catalogue.
+ */
+export interface Voice {
+  voiceId: string;
+  name: string;
+  language?: string;
+  accent?: string;
+  gender?: 'male' | 'female' | 'neutral';
+  provider?: string;
+  /** Descriptive blurb from the Telnyx catalogue. */
+  label?: string;
+  /**
+   * Exactly one enabled voice carries this. It is the voice used when a mission
+   * test does not choose one.
+   */
+  isDefault?: boolean;
+}
+
+/** Response for `GET /testing/voices`. */
+export interface ListVoicesResponse {
+  voices: Voice[];
+  /**
+   * Which voice is used when a mission test does not choose one. Absent only
+   * if no voice is flagged default.
+   */
+  defaultVoiceId?: string;
+}

@@ -35,6 +35,26 @@ for await (const audio of client.audio.list()) {
 }
 ```
 
+### Digital testing (beta)
+
+Access is limited to beta workspaces during the beta period.
+
+```ts
+const run = await client.digitalTesting.create({
+  targetRef: 'acme/billing-bot',
+  target: { transport: 'web-widget', url: 'https://example.com/support' },
+  // `sector` and `mission` are required on every digital run.
+  sector: 'utilities',
+  mission: 'Pay my bill',
+  kind: 'freeform',
+  acceptance: 'The bot states the outstanding balance.',
+});
+
+const finished = await client.digitalTesting.waitForRun(run.id);
+// `completed` with outcome 'fail' is a RESULT, not an error.
+console.log(finished.status, finished.outcome, finished.passRate);
+```
+
 ## Features
 
 - Full coverage of the Nopaque REST API via API-key auth
