@@ -1,6 +1,10 @@
 import { Resource } from '../resource.js';
 import type { RequestOptions } from '../requestOptions.js';
-import type { DigitalComplianceAuditSummary } from '../types/digitalTesting.js';
+import type {
+  DigitalComplianceAuditSummary,
+  DigitalComplianceReportParams,
+  ListDigitalComplianceAuditsResponse,
+} from '../types/digitalTesting.js';
 
 /**
  * Digital (chat channel) compliance audits.
@@ -14,7 +18,7 @@ export class DigitalComplianceResource extends Resource {
    * @beta Access is limited to beta workspaces during the beta period.
    */
   async listAudits(requestOptions?: RequestOptions): Promise<DigitalComplianceAuditSummary[]> {
-    const raw = await this.transport.request<{ audits?: DigitalComplianceAuditSummary[] }>(
+    const raw = await this.transport.request<Partial<ListDigitalComplianceAuditsResponse>>(
       'GET',
       '/digital-testing/compliance-audits',
       { requestOptions },
@@ -29,11 +33,17 @@ export class DigitalComplianceResource extends Resource {
    * slashes (`acme/billing-bot`) and a single path segment cannot hold one. The
    * API made the same choice for the same reason.
    *
+   * Pass `{ sector }` to restrict the catalogue to tests applicable to that sector.
+   *
    * @beta Access is limited to beta workspaces during the beta period.
    */
-  async getReport(targetRef: string, requestOptions?: RequestOptions): Promise<unknown> {
+  async getReport(
+    targetRef: string,
+    params: DigitalComplianceReportParams = {},
+    requestOptions?: RequestOptions,
+  ): Promise<unknown> {
     return await this.transport.request('GET', '/digital-testing/compliance-audits/report', {
-      params: { targetRef },
+      params: { targetRef, ...params },
       requestOptions,
     });
   }

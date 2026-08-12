@@ -4,9 +4,17 @@ import { Paginator, Page } from '../pagination.js';
 import { waitFor } from '../polling.js';
 import type {
   CreateDigitalTestRunRequest,
+  CreateDigitalTestRunResponse,
   DigitalTestRun,
   DigitalTestRunListParams,
+  ListDigitalTestRunsResponse,
 } from '../types/digitalTesting.js';
+
+/** The list response plus the `items`/`nextToken` aliases kept for forward compatibility. */
+type ListRunsRaw = Partial<ListDigitalTestRunsResponse> & {
+  items?: DigitalTestRun[];
+  nextToken?: string | null;
+};
 
 const TERMINAL: ReadonlySet<string> = new Set(['completed', 'failed', 'cancelled']);
 
@@ -36,7 +44,7 @@ export class DigitalTestingResource extends Resource {
   ): Promise<DigitalTestRun> {
     // POST returns { message, run } — unwrap the run object.
     const raw = await this.transport.request<
-      { message?: string; run?: DigitalTestRun } & DigitalTestRun
+      Partial<CreateDigitalTestRunResponse> & DigitalTestRun
     >('POST', '/digital-testing/runs', { body, requestOptions });
     return raw.run ?? raw;
   }
@@ -54,13 +62,10 @@ export class DigitalTestingResource extends Resource {
       fetchPage: async (p) => {
         const { nextToken, cursor, ...rest } = p as DigitalTestRunListParams;
         // Server returns { runs: [...], nextCursor? } rather than { items, nextToken }.
-        const raw = await this.transport.request<{
-          runs?: DigitalTestRun[];
-          items?: DigitalTestRun[];
-          nextCursor?: string | null;
-          nextToken?: string | null;
-        }>('GET', '/digital-testing/runs', {
-          params: { ...rest, cursor: cursor ?? nextToken },
+        const raw = await this.transport.request<ListRunsRaw>('GET', '/digital-testing/runs', {
+          // `nextToken` first: the Paginator advances by writing it, and a
+          // caller-supplied `cursor` would otherwise pin every page to page one.
+          params: { ...rest, cursor: nextToken ?? cursor },
           requestOptions,
         });
         return {
@@ -82,13 +87,8 @@ export class DigitalTestingResource extends Resource {
     requestOptions?: RequestOptions,
   ): Promise<Page<DigitalTestRun>> {
     const { nextToken, cursor, ...rest } = params;
-    const raw = await this.transport.request<{
-      runs?: DigitalTestRun[];
-      items?: DigitalTestRun[];
-      nextCursor?: string | null;
-      nextToken?: string | null;
-    }>('GET', '/digital-testing/runs', {
-      params: { ...rest, cursor: cursor ?? nextToken },
+    const raw = await this.transport.request<ListRunsRaw>('GET', '/digital-testing/runs', {
+      params: { ...rest, cursor: nextToken ?? cursor },
       requestOptions,
     });
     return new Page(raw.runs ?? raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);

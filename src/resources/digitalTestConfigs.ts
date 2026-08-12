@@ -3,12 +3,20 @@ import type { RequestOptions } from '../requestOptions.js';
 import { Paginator, Page } from '../pagination.js';
 import type {
   CreateDigitalTestConfigRequest,
+  CreateDigitalTestRunResponse,
   DigitalTestConfig,
   DigitalTestConfigListParams,
   DigitalTestRun,
   LaunchDigitalTestConfigRequest,
+  ListDigitalTestConfigsResponse,
   UpdateDigitalTestConfigRequest,
 } from '../types/digitalTesting.js';
+
+/** The list response plus the `items`/`nextToken` aliases kept for forward compatibility. */
+type ListConfigsRaw = Partial<ListDigitalTestConfigsResponse> & {
+  items?: DigitalTestConfig[];
+  nextToken?: string | null;
+};
 
 /**
  * Saved digital (chat channel) test configs.
@@ -25,15 +33,16 @@ export class DigitalTestConfigsResource extends Resource {
       fetchPage: async (p) => {
         const { nextToken, cursor, ...rest } = p as DigitalTestConfigListParams;
         // Server returns { configs: [...], nextCursor? }.
-        const raw = await this.transport.request<{
-          configs?: DigitalTestConfig[];
-          items?: DigitalTestConfig[];
-          nextCursor?: string | null;
-          nextToken?: string | null;
-        }>('GET', '/digital-testing/configs', {
-          params: { ...rest, cursor: cursor ?? nextToken },
-          requestOptions,
-        });
+        const raw = await this.transport.request<ListConfigsRaw>(
+          'GET',
+          '/digital-testing/configs',
+          {
+            // `nextToken` first: the Paginator advances by writing it, and a
+            // caller-supplied `cursor` would otherwise pin every page to page one.
+            params: { ...rest, cursor: nextToken ?? cursor },
+            requestOptions,
+          },
+        );
         return {
           items: raw.configs ?? raw.items ?? [],
           nextToken: raw.nextCursor ?? raw.nextToken ?? null,
@@ -49,13 +58,8 @@ export class DigitalTestConfigsResource extends Resource {
     requestOptions?: RequestOptions,
   ): Promise<Page<DigitalTestConfig>> {
     const { nextToken, cursor, ...rest } = params;
-    const raw = await this.transport.request<{
-      configs?: DigitalTestConfig[];
-      items?: DigitalTestConfig[];
-      nextCursor?: string | null;
-      nextToken?: string | null;
-    }>('GET', '/digital-testing/configs', {
-      params: { ...rest, cursor: cursor ?? nextToken },
+    const raw = await this.transport.request<ListConfigsRaw>('GET', '/digital-testing/configs', {
+      params: { ...rest, cursor: nextToken ?? cursor },
       requestOptions,
     });
     return new Page(raw.configs ?? raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);
@@ -115,7 +119,7 @@ export class DigitalTestConfigsResource extends Resource {
     requestOptions?: RequestOptions,
   ): Promise<DigitalTestRun> {
     const raw = await this.transport.request<
-      { message?: string; run?: DigitalTestRun } & DigitalTestRun
+      Partial<CreateDigitalTestRunResponse> & DigitalTestRun
     >('POST', `/digital-testing/configs/${configId}/runs`, { body, requestOptions });
     return raw.run ?? raw;
   }
