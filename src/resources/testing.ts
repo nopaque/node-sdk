@@ -7,6 +7,7 @@ import type {
   CreateTestConfigRequest,
   CreateTestJobRequest,
   CreateTestRunRequest,
+  ListVoicesResponse,
   MissionTestRunResponse,
   TestConfig,
   TestingListParams,
@@ -235,6 +236,11 @@ export class TestingResource extends Resource {
     requestOptions?: RequestOptions
   ): Paginator<TestRunListItem> {
     return this.runs.list(params, requestOptions);
+  }
+
+  /** GET /testing/voices — operator-enabled voices a mission test may use. */
+  async listVoices(requestOptions?: RequestOptions): Promise<ListVoicesResponse> {
+    return await this.transport.request('GET', '/testing/voices', { requestOptions });
   }
 
   /** GET /testing/runs/aggregate — grouped counts over test runs. */

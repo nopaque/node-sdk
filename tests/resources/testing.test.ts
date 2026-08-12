@@ -189,3 +189,22 @@ describe('TestingResource runs', () => {
     ).rejects.toBeInstanceOf(NopaqueTimeoutError);
   });
 });
+
+describe('TestingResource.listVoices', () => {
+  it('GETs /testing/voices and returns voices with the default', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        body: {
+          voices: [{ id: 'v1', name: 'Ultra', isDefault: true }],
+          defaultVoiceId: 'v1',
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const r = await c.testing.listVoices();
+    expect(calls[0].url).toContain('/testing/voices');
+    expect(calls[0].init.method).toBe('GET');
+    expect(r.voices).toHaveLength(1);
+    expect(r.defaultVoiceId).toBe('v1');
+  });
+});
