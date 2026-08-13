@@ -182,9 +182,18 @@ describe('DigitalTestingResource', () => {
               outcome: 'fail',
               stepsRun: 2,
               stepsTotal: 3,
-              transcript: 'customer: hello\nbot: hi',
+              transcript: [
+                { role: 'customer', text: 'hello', at: '2026-08-12T00:00:00Z' },
+                { role: 'bot', text: 'hi', at: '2026-08-12T00:00:01Z' },
+              ],
               reasoning: 'The bot never stated the outstanding balance.',
-              evidence: ['bot: I can help with that'],
+              passEvidence: [{ condition: 'Greeted the customer', reason: 'bot: hi' }],
+              failEvidence: [
+                {
+                  condition: 'Stated the outstanding balance',
+                  reason: 'bot: I can help with that',
+                },
+              ],
               stepResults: [
                 {
                   stepId: 's1',
@@ -209,7 +218,12 @@ describe('DigitalTestingResource', () => {
     const sample = r.samples?.[0];
     expect(sample?.reasoning).toBe('The bot never stated the outstanding balance.');
     expect(sample?.stepsRun).toBe(2);
-    expect(sample?.evidence).toEqual(['bot: I can help with that']);
+    // A list of turns, not a string, and split pass/fail evidence — the shapes
+    // the API actually returns, which the OpenAPI document gets wrong.
+    expect(sample?.transcript?.map((turn) => turn.role)).toEqual(['customer', 'bot']);
+    expect(sample?.transcript?.[1]?.text).toBe('hi');
+    expect(sample?.passEvidence?.[0]?.condition).toBe('Greeted the customer');
+    expect(sample?.failEvidence?.[0]?.reason).toBe('bot: I can help with that');
     const step = sample?.stepResults?.[0];
     expect(step?.stepId).toBe('s1');
     expect(step?.expectedTranscript).toBe('Hello');
