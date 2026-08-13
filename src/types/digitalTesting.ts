@@ -113,15 +113,39 @@ export interface DigitalStepResult {
   duration?: number;
 }
 
+/** One turn of the conversation, as the worker's transcript emits it. */
+export interface DigitalTranscriptTurn {
+  role?: string;
+  text?: string;
+  at?: string;
+}
+
+/**
+ * One condition the judge cited for its verdict. `condition` and `reason` are
+ * what the judge sends today; the rest are tolerated because the judge may add
+ * fields and an unknown one must never cost a caller their verdict.
+ */
+export interface DigitalEvidence {
+  condition?: string;
+  reason?: string;
+  quote?: string;
+  met?: boolean;
+  triggered?: boolean;
+  turn?: number;
+}
+
 /** One conversation, with its own verdict and evidence. */
 export interface DigitalSample {
   outcome?: DigitalOutcome;
   stepResults?: DigitalStepResult[];
   stepsRun?: number;
   stepsTotal?: number;
-  transcript?: string;
+  /** A list of turns, NOT a string - whatever the OpenAPI document says. */
+  transcript?: DigitalTranscriptTurn[];
   reasoning?: string;
-  evidence?: string[];
+  /** Judged kinds only. There is no combined `evidence` field. */
+  passEvidence?: DigitalEvidence[];
+  failEvidence?: DigitalEvidence[];
   failureReason?: string;
 }
 
@@ -141,6 +165,8 @@ export interface DigitalTestRun {
   mission?: string;
   acceptance?: string;
   catalogueTestId?: string;
+  /** Set when the run was launched from a saved config. Undeclared in the OpenAPI document. */
+  configId?: string;
   /**
    * `failed` means the test could not be DELIVERED (an infrastructure failure,
    * with `failureReason` set). A bot that behaved badly produces `completed`
