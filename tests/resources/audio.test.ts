@@ -13,7 +13,7 @@ function client(fetch: typeof globalThis.fetch) {
 describe('AudioResource', () => {
   it('list: returns paginated items', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { audioFiles: [{ id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav' }], count: 1 } },
+      { body: { audioFiles: [{ id: 'aud_1', filename: 'a.wav', contentType: 'audio/wav' }], count: 1 } },
     ]);
     const c = client(fetch);
     const out = [];
@@ -24,8 +24,8 @@ describe('AudioResource', () => {
 
   it('list: paginates', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { audioFiles: [{ id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav' }], nextToken: 't1' } },
-      { body: { audioFiles: [{ id: 'aud_2', fileName: 'b.wav', contentType: 'audio/wav' }], nextToken: null } },
+      { body: { audioFiles: [{ id: 'aud_1', filename: 'a.wav', contentType: 'audio/wav' }], nextToken: 't1' } },
+      { body: { audioFiles: [{ id: 'aud_2', filename: 'b.wav', contentType: 'audio/wav' }], nextToken: null } },
     ]);
     const c = client(fetch);
     const out = [];
@@ -35,7 +35,7 @@ describe('AudioResource', () => {
 
   it('get: returns the audio file', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { id: 'aud_1', fileName: 'a.wav', contentType: 'audio/wav', sizeBytes: 1024 } },
+      { body: { id: 'aud_1', filename: 'a.wav', contentType: 'audio/wav', sizeBytes: 1024 } },
     ]);
     const c = client(fetch);
     const f = await c.audio.get('aud_1');
@@ -59,9 +59,15 @@ describe('AudioResource', () => {
       { body: { uploadUrl: 'https://s3.example/sign', audioId: 'aud_xyz', expiresIn: 3600 } },
     ]);
     const c = client(fetch);
-    const res = await c.audio.createUploadUrl({ fileName: 'a.wav', contentType: 'audio/wav' });
+    const res = await c.audio.createUploadUrl({
+      filename: 'a.wav',
+      contentType: 'audio/wav',
+      category: 'test',
+    });
     expect(res.audioId).toBe('aud_xyz');
-    expect(calls[0].init.body).toBe(JSON.stringify({ fileName: 'a.wav', contentType: 'audio/wav' }));
+    expect(calls[0].init.body).toBe(
+      JSON.stringify({ filename: 'a.wav', contentType: 'audio/wav', category: 'test' })
+    );
   });
 
   it('createDownloadUrl: adds audioId query param', async () => {
@@ -78,12 +84,12 @@ describe('AudioResource', () => {
     const { fetch } = makeQueuedFetch([
       { body: { uploadUrl: 'https://s3.example/sign', audioId: 'aud_xyz', expiresIn: 3600 } },
       { status: 200 }, // S3 PUT
-      { body: { id: 'aud_xyz', fileName: 'a.wav', contentType: 'audio/wav' } },
+      { body: { id: 'aud_xyz', filename: 'a.wav', contentType: 'audio/wav' } },
     ]);
     const c = client(fetch);
     const tmp = path.join(os.tmpdir(), 'sdk-upload-test.wav');
     await fs.writeFile(tmp, Buffer.from('RIFFWAVE'));
-    const a = await c.audio.upload({ file: tmp, contentType: 'audio/wav' });
+    const a = await c.audio.upload({ file: tmp, contentType: 'audio/wav', category: 'test' });
     expect(a.id).toBe('aud_xyz');
     await fs.unlink(tmp).catch(() => {});
   });

@@ -18,7 +18,7 @@ describe.skipIf(!apiKey)('integration smoke (live dev API)', () => {
     const client = getClient();
     const sched = await client.scheduler.create({
       name: 'sdk-smoke-test',
-      configId: 'cfg_smoke',
+      scheduleType: 'cron',
       cronExpression: '0 0 * * *',
     });
     try {
@@ -32,8 +32,9 @@ describe.skipIf(!apiKey)('integration smoke (live dev API)', () => {
   it('create audio upload URL succeeds (without actual upload)', async () => {
     const client = getClient();
     const res = await client.audio.createUploadUrl({
-      fileName: 'smoke-test.wav',
+      filename: 'smoke-test.wav',
       contentType: 'audio/wav',
+      category: 'test',
     });
     expect(res.uploadUrl).toMatch(/^https:\/\//);
     expect(res.audioId).toBeTruthy();

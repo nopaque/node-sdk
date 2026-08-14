@@ -14,27 +14,47 @@ describe('SchedulerResource', () => {
         body: {
           id: 'sched_1',
           name: 'Daily',
-          configId: 'c',
+          scheduleType: 'cron',
           cronExpression: '0 9 * * *',
-          status: 'active',
+          timezone: 'UTC',
+          enabled: 'true',
+          nextRunAt: '2026-08-16T09:00:00.000Z',
+          runCount: 0,
         },
       },
     ]);
     const c = client(fetch);
     const s = await c.scheduler.create({
       name: 'Daily',
-      configId: 'c',
+      scheduleType: 'cron',
       cronExpression: '0 9 * * *',
     });
     expect(s.id).toBe('sched_1');
     expect(calls[0].url).toContain('/schedules');
+    // scheduleType is required by the API; a body without it is a 400.
+    expect(JSON.parse(calls[0].init.body as string)).toMatchObject({
+      name: 'Daily',
+      scheduleType: 'cron',
+      cronExpression: '0 9 * * *',
+    });
   });
 
   it('list paginates', async () => {
     const { fetch } = makeQueuedFetch([
       {
         body: {
-          schedules: [{ id: 'sched_1', name: 'A', configId: 'c', cronExpression: '* * * * *', status: 'active' }],
+          schedules: [
+            {
+              id: 'sched_1',
+              name: 'A',
+              scheduleType: 'cron',
+              cronExpression: '* * * * *',
+              timezone: 'UTC',
+              enabled: 'true',
+              nextRunAt: '2026-08-16T00:00:00.000Z',
+              runCount: 0,
+            },
+          ],
           count: 1,
         },
       },
@@ -47,7 +67,7 @@ describe('SchedulerResource', () => {
 
   it('get', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { id: 'sched_1', name: 'A', configId: 'c', cronExpression: '* * * * *', status: 'active' } },
+      { body: { id: 'sched_1', name: 'A', scheduleType: 'cron', cronExpression: '* * * * *', timezone: 'UTC', enabled: 'true', nextRunAt: '2026-08-16T00:00:00.000Z', runCount: 0 } },
     ]);
     const c = client(fetch);
     const s = await c.scheduler.get('sched_1');
@@ -62,7 +82,7 @@ describe('SchedulerResource', () => {
 
   it('update uses PUT', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { id: 'sched_1', name: 'B', configId: 'c', cronExpression: '* * * * *', status: 'active' } },
+      { body: { id: 'sched_1', name: 'B', scheduleType: 'cron', cronExpression: '* * * * *', timezone: 'UTC', enabled: 'true', nextRunAt: '2026-08-16T00:00:00.000Z', runCount: 0 } },
     ]);
     const c = client(fetch);
     await c.scheduler.update('sched_1', { name: 'B' });
@@ -77,14 +97,15 @@ describe('SchedulerResource', () => {
 
   it('pause and resume', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { id: 'sched_1', name: 'A', configId: 'c', cronExpression: '* * * * *', status: 'paused' } },
-      { body: { id: 'sched_1', name: 'A', configId: 'c', cronExpression: '* * * * *', status: 'active' } },
+      { body: { id: 'sched_1', name: 'A', scheduleType: 'cron', cronExpression: '* * * * *', timezone: 'UTC', enabled: 'false', nextRunAt: '2026-08-16T00:00:00.000Z', runCount: 0 } },
+      { body: { id: 'sched_1', name: 'A', scheduleType: 'cron', cronExpression: '* * * * *', timezone: 'UTC', enabled: 'true', nextRunAt: '2026-08-16T00:00:00.000Z', runCount: 0 } },
     ]);
     const c = client(fetch);
+    // Paused/resumed state rides on `enabled`, whose wire form is a string.
     const p = await c.scheduler.pause('sched_1');
-    expect(p.status).toBe('paused');
+    expect(p.enabled).toBe('false');
     const r = await c.scheduler.resume('sched_1');
-    expect(r.status).toBe('active');
+    expect(r.enabled).toBe('true');
     expect(calls[0].url).toContain('/schedules/sched_1/pause');
     expect(calls[1].url).toContain('/schedules/sched_1/resume');
     expect(calls[0].init.method).toBe('POST');
