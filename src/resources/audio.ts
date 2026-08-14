@@ -72,7 +72,13 @@ export class AudioResource extends Resource {
     const resolvedType = input.contentType ?? sniffContentType(resolvedName);
 
     const presign = await this.createUploadUrl(
-      { fileName: resolvedName, contentType: resolvedType },
+      {
+        filename: resolvedName,
+        contentType: resolvedType,
+        category: input.category,
+        ...(input.associatedId && { associatedId: input.associatedId }),
+        sizeBytes: bytes.byteLength,
+      },
       requestOptions
     );
 
