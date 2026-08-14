@@ -9,7 +9,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # required for npm provenance
+      # OIDC. Authenticates the publish itself (npm trusted publishing) and
+      # signs the provenance attestation. No npm token is involved.
+      id-token: write
       contents: write   # for GitHub Release
 
     steps:
@@ -19,9 +21,19 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          # Trusted publishing needs Node >= 22.14.0 and npm >= 11.5.1.
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
+          # No dependency cache in a release build: what gets published must
+          # come from a clean resolve of the lockfile, not from whatever a
+          # cache happened to restore.
+
+      # Node 24 bundles npm 11.x, but the exact patch moves with the runner
+      # image. Pin the floor the OIDC exchange needs rather than trusting it.
+      - name: Ensure npm can do trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
       - name: Verify tag matches package.json version
         run: |
@@ -36,10 +48,13 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-      - name: Publish to npm with provenance
-        run: pnpm publish --access public --provenance --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # `npm publish`, not `pnpm publish`: the OIDC exchange lives in the npm
+      # CLI, and pnpm 9.6.0 has no documented support for it.
+      #
+      # No `--provenance` flag: publishing through a trusted publisher from a
+      # public repo generates the attestation automatically.
+      - name: Publish to npm via trusted publishing
+        run: npm publish --access public
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
