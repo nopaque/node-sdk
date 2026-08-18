@@ -31,11 +31,37 @@ export type MappingRunStatus =
   | 'failed'
   | 'limited';
 
+/**
+ * Industry vertical used for prompt-library lookup. Required by the API
+ * whenever `mappingMode` is not `dtmf`.
+ */
+export type Vertical = 'FSI' | 'Healthcare' | 'EnergyUtilities' | 'Telecoms' | 'General';
+
+/** Behaviour when the orchestrator revisits an already-discovered menu. */
+export type RepeatBehavior = 'skip' | 'explore_once' | 'explore_n';
+
 export interface RetryConfig {
   enabled: boolean;
   maxRetries: number;
 }
 
+export interface RepeatConfig {
+  behavior: RepeatBehavior;
+  /** Only meaningful when `behavior` is `explore_n`. Defaults to 2 server-side. */
+  maxExplorations?: number;
+}
+
+export interface EnrichmentConfig {
+  enabled: boolean;
+  /** Defaults to `["quality_scoring"]` server-side. */
+  types?: string[];
+}
+
+/**
+ * Per-job configuration. Every mode-related knob lives here rather than at the
+ * top of the request body — the API reads `body.config.mappingMode`, and a
+ * top-level `mappingMode` is ignored.
+ */
 export interface MappingJobConfig {
   maxDepth?: number;
   maxCalls?: number;
@@ -45,7 +71,13 @@ export interface MappingJobConfig {
   voiceProfileId?: string;
   dataProfileId?: string;
   retryConfig?: RetryConfig;
+  repeatConfig?: RepeatConfig;
+  enrichmentConfig?: EnrichmentConfig;
   mappingMode?: MappingMode;
+  /** Required when `mappingMode` is `dtmf-audio` or `full-audio`. */
+  vertical?: Vertical;
+  /** Security-probe mode. The API rejects it combined with `mappingMode: 'dtmf'`. */
+  probeMode?: boolean;
 }
 
 export interface MappingJobStats {

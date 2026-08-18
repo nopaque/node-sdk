@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-18
+
+### Added
+
+- `MappingJobConfig` now carries the full configuration surface the API accepts.
+  Previously it exposed 9 of the 13 documented fields, and the four it omitted
+  included `vertical` — which the API **requires** whenever `mappingMode` is
+  `dtmf-audio` or `full-audio`. Audio mapping jobs were therefore impossible to
+  create from the SDK; only `dtmf` worked.
+  - `vertical` — `FSI | Healthcare | EnergyUtilities | Telecoms | General`.
+  - `probeMode` — security-probe flag. Rejected by the API in combination with
+    `mappingMode: 'dtmf'`.
+  - `repeatConfig` — `{ behavior, maxExplorations? }` for revisited-menu handling.
+  - `enrichmentConfig` — `{ enabled, types? }` for the post-run enrichment pipeline.
+- New exported types: `Vertical`, `RepeatBehavior`, `RepeatConfig`, `EnrichmentConfig`.
+
 ## [0.4.0] - 2026-08-12
 
 ### Added

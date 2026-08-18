@@ -25,6 +25,43 @@ describe('MappingResource', () => {
     });
   });
 
+  it('create sends the full config surface for a non-dtmf job', async () => {
+    // vertical is required by the API whenever mappingMode !== 'dtmf'; before
+    // these fields existed on MappingJobConfig, audio modes were uncreatable.
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'map_2', name: 'Audio', phoneNumber: '+441', status: 'idle' } },
+    ]);
+    const c = client(fetch);
+    await c.mapping.create({
+      name: 'Audio',
+      phoneNumber: '+441',
+      config: {
+        mappingMode: 'full-audio',
+        vertical: 'Healthcare',
+        probeMode: true,
+        maxDepth: 4,
+        maxCalls: 25,
+        maxDurationMinutes: 20,
+        maxConcurrency: 2,
+        retryConfig: { enabled: true, maxRetries: 3 },
+        repeatConfig: { behavior: 'explore_n', maxExplorations: 2 },
+        enrichmentConfig: { enabled: true, types: ['quality_scoring'] },
+      },
+    });
+    expect(JSON.parse(calls[0].init.body as string).config).toEqual({
+      mappingMode: 'full-audio',
+      vertical: 'Healthcare',
+      probeMode: true,
+      maxDepth: 4,
+      maxCalls: 25,
+      maxDurationMinutes: 20,
+      maxConcurrency: 2,
+      retryConfig: { enabled: true, maxRetries: 3 },
+      repeatConfig: { behavior: 'explore_n', maxExplorations: 2 },
+      enrichmentConfig: { enabled: true, types: ['quality_scoring'] },
+    });
+  });
+
   it('create forwards tags', async () => {
     const { fetch, calls } = makeQueuedFetch([
       { body: { id: 'map_1', name: 'Main', status: 'idle', tags: ['compliance-eu'] } },
