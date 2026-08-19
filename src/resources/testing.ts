@@ -13,6 +13,7 @@ import type {
   TestingListParams,
   TestJob,
   TestRun,
+  TestRunDetails,
   TestRunAggregateParams,
   TestRunAggregateResponse,
   TestRunListItem,
@@ -21,6 +22,27 @@ import type {
 } from '../types/testing.js';
 
 const RUN_TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
+
+/**
+ * Has the run finished AND had its verdict written?
+ *
+ * A run can be marked terminal before its outcome lands. The container emits
+ * `run_status_changed{status:'completed'}` and `run_completed{outcome}` as
+ * separate SQS messages, and SQS gives no ordering guarantee — the API's own
+ * response-handler documents the mirror-image race (a late `running` arriving
+ * after a terminal write). `updateTestRun` skips undefined fields, so a
+ * `run_status_changed` carrying no outcome sets `status` terminal and leaves
+ * `outcome` unwritten. Polling on status alone returns that intermediate row:
+ * `outcome: undefined` and zero step results on a run that passed.
+ *
+ * So for `completed` we additionally require a decided verdict. `failed` and
+ * `cancelled` are accepted immediately — neither is expected to carry one.
+ */
+function isRunSettled(run: TestRun): boolean {
+  if (run.status === undefined || !RUN_TERMINAL_STATUSES.has(run.status)) return false;
+  if (run.status !== 'completed') return true;
+  return run.outcome != null && run.outcome !== 'pending';
+}
 
 export interface TestingWaitForOptions {
   timeout?: number;
@@ -199,17 +221,17 @@ export class TestingRunsResource extends Resource {
     });
   }
 
-  async get(runId: string, requestOptions?: RequestOptions): Promise<TestRun> {
+  async get(runId: string, requestOptions?: RequestOptions): Promise<TestRunDetails> {
     return await this.transport.request('GET', `/testing/runs/${runId}`, { requestOptions });
   }
 
   async waitForRun(
     runId: string,
     opts: TestingWaitForOptions = {}
-  ): Promise<TestRun> {
-    return await waitFor<TestRun>({
+  ): Promise<TestRunDetails> {
+    return await waitFor<TestRunDetails>({
       fetch: () => this.get(runId, opts.requestOptions),
-      isTerminal: (run) => run.status !== undefined && RUN_TERMINAL_STATUSES.has(run.status),
+      isTerminal: isRunSettled,
       timeout: opts.timeout,
       initialInterval: opts.pollInterval,
       intervalCap: opts.intervalCap,
