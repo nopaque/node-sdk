@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-08-19
+
+### Fixed
+
+- `TestRun.outcome` replaces `TestRun.result`. The API has never sent a
+  `result` field, so `run.result` read as `undefined` on every run including
+  passing ones, and the declared values (`pass`/`fail`/`partial`) did not exist.
+  The real field is `outcome`, with uppercase values
+  `PASS | FAIL | ERROR | INCONCLUSIVE | pending` — the same `TestRunOutcome`
+  the list, aggregate and mission-run types already used. Only the full
+  `TestRun` entity had drifted. The removed `TestRunResult` type described a
+  field that never existed.
+- `ProfileItem` is now the discriminated union the API actually returns, keyed
+  on `type`: `ProfileVoiceItem` (`audioId`) or `ProfileDataItem`
+  (`datasetId` + `itemId`). It was previously `{id, label, value}` with both
+  `label` and `value` required — `value` does not exist on either variant, and
+  `label` is deprecated server-side and usually absent. `openapi.yaml` had this
+  right as a `oneOf`; the SDK was the drifted surface.
+- `profiles.addItem()`, `updateItem()` and `deleteItem()` return the updated
+  `Profile`, which is what all three routes send. They were typed as returning
+  a `ProfileItem` (and `deleteItem` discarded the body entirely).
+- `AddProfileItemRequest` is a union requiring `type` plus the matching id
+  field, replacing the invented `{label, value}`. `UpdateProfileItemRequest`
+  takes `label` / `description` — the only two fields the handler reads.
+- Removed `Profile.matchedLabels`, which appears nowhere in the API.
+
 ## [0.5.0] - 2026-08-18
 
 ### Added

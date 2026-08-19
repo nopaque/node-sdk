@@ -5,7 +5,6 @@ import type {
   AddProfileItemRequest,
   CreateProfileRequest,
   Profile,
-  ProfileItem,
   ProfileParametersResponse,
   ProfilesByParametersParams,
   ProfilesByParametersResponse,
@@ -66,7 +65,7 @@ export class ProfilesResource extends Resource {
     profileId: string,
     body: AddProfileItemRequest,
     requestOptions?: RequestOptions
-  ): Promise<ProfileItem> {
+  ): Promise<Profile> {
     return await this.transport.request('POST', `/profiles/${profileId}/items`, {
       body,
       requestOptions,
@@ -78,19 +77,20 @@ export class ProfilesResource extends Resource {
     itemId: string,
     body: UpdateProfileItemRequest,
     requestOptions?: RequestOptions
-  ): Promise<ProfileItem> {
+  ): Promise<Profile> {
     return await this.transport.request('PUT', `/profiles/${profileId}/items/${itemId}`, {
       body,
       requestOptions,
     });
   }
 
+  /** Returns the updated profile, as all three item routes do. */
   async deleteItem(
     profileId: string,
     itemId: string,
     requestOptions?: RequestOptions
-  ): Promise<void> {
-    await this.transport.request(
+  ): Promise<Profile> {
+    return await this.transport.request(
       'DELETE',
       `/profiles/${profileId}/items/${itemId}`,
       { requestOptions }

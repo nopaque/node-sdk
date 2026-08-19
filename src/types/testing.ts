@@ -68,8 +68,6 @@ export type TestRunStatus =
   | 'failed'
   | 'cancelled';
 
-export type TestRunResult = 'pass' | 'fail' | 'partial';
-
 /**
  * A single execution of a test. The primary identifier is `id`, matching the
  * server's entity shape. Pass it to `waitForRun()` and `get()`.
@@ -83,7 +81,11 @@ export interface TestRun {
   testConfigId?: string;
   workspaceId?: string;
   status?: TestRunStatus;
-  result?: TestRunResult;
+  /**
+   * Terminal verdict. The API never sends a `result` field — an SDK type
+   * declaring one read as undefined on every run, including passing ones.
+   */
+  outcome?: TestRunOutcome | null;
   startedAt?: string;
   completedAt?: string;
   launchDeadline?: string;
