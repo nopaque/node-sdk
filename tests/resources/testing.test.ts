@@ -113,14 +113,15 @@ describe('TestingResource runs', () => {
     // Server returns { runs: [...] }, not { items }.
     const { fetch } = makeQueuedFetch([
       { body: { runs: [{ id: 'run_1', jobId: 'job_1', status: 'completed' }] } },
-      { body: { id: 'run_1', jobId: 'job_1', status: 'completed', result: 'pass' } },
+      { body: { id: 'run_1', jobId: 'job_1', status: 'completed', outcome: 'PASS' } },
     ]);
     const c = client(fetch);
     const out = [];
     for await (const r of c.testing.runs.list()) out.push(r);
     expect(out[0].id).toBe('run_1');
     const r = await c.testing.runs.get('run_1');
-    expect(r.result).toBe('pass');
+    // The API sends `outcome` (uppercase), never `result`.
+    expect(r.outcome).toBe('PASS');
   });
 
   it('list sends filters and follows nextCursor', async () => {

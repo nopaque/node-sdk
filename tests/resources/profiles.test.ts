@@ -56,26 +56,37 @@ describe('ProfilesResource', () => {
 
   it('addItem', async () => {
     const { fetch, calls } = makeQueuedFetch([
-      { body: { id: 'item_1', profileId: 'prof_1', label: 'x', value: 'y' } },
+      { body: { id: 'prof_1', name: 'P', items: [{ type: 'data', id: 'item_1', datasetId: 'ds_1', itemId: 'i_1' }] } },
     ]);
     const c = client(fetch);
-    const item = await c.profiles.addItem('prof_1', { label: 'x', value: 'y' });
-    expect(item.id).toBe('item_1');
+    const item = await c.profiles.addItem('prof_1', {
+      type: 'data',
+      datasetId: 'ds_1',
+      itemId: 'i_1',
+      label: 'Card number',
+    });
+    expect(item.items?.[0]?.id).toBe('item_1');
     expect(calls[0].url).toContain('/profiles/prof_1/items');
   });
 
   it('updateItem', async () => {
-    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'item_1', value: 'z' } }]);
+    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'prof_1', name: 'P' } }]);
     const c = client(fetch);
-    await c.profiles.updateItem('prof_1', 'item_1', { value: 'z' });
+    await c.profiles.updateItem('prof_1', 'item_1', { label: 'Renamed' });
     expect(calls[0].init.method).toBe('PUT');
     expect(calls[0].url).toContain('/profiles/prof_1/items/item_1');
   });
 
-  it('deleteItem', async () => {
-    const { fetch } = makeQueuedFetch([{ body: { message: 'ok' } }]);
+  it('deleteItem returns the updated profile', async () => {
+    // All three item routes return the parent profile, not the item.
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'prof_1', name: 'P', items: [] } },
+    ]);
     const c = client(fetch);
-    await expect(c.profiles.deleteItem('prof_1', 'item_1')).resolves.toBeUndefined();
+    const profile = await c.profiles.deleteItem('prof_1', 'item_1');
+    expect(profile.id).toBe('prof_1');
+    expect(profile.items).toEqual([]);
+    expect(calls[0].url).toContain('/profiles/prof_1/items/item_1');
   });
 
   it('listParameters', async () => {
