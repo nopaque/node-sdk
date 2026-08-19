@@ -96,6 +96,42 @@ export interface TestRun {
 }
 
 /**
+ * A single scripted step's result. Named `TestStepResult`, not `StepResult` —
+ * the latter is already exported for mapping and is an unrelated shape.
+ */
+export interface TestStepResult {
+  id: string;
+  runId: string;
+  stepIndex: number;
+  stepId: string;
+  stepName: string;
+  outcome: 'PASS' | 'FAIL' | 'TIMEOUT' | 'ERROR';
+  expectedTranscript: string;
+  actualTranscript?: string;
+  similarity?: number;
+  threshold: number;
+  actionType?: string;
+  actionValue?: string;
+  duration?: number;
+  errorMessage?: string;
+  matcherScores?: Record<string, number>;
+  turnTelemetry?: Record<string, unknown>;
+  createdAt: string;
+}
+
+/**
+ * What `testing.runs.get()` returns: the run row enriched with its step
+ * results, the joined transcript, and a snapshot of the parent config.
+ * Mission and compliance runs have no scripted steps, so `stepResults` is
+ * empty and `config` is absent for those.
+ */
+export interface TestRunDetails extends TestRun {
+  stepResults?: TestStepResult[];
+  fullTranscript?: string;
+  config?: TestConfig;
+}
+
+/**
  * Body for POST /testing/runs. Exactly one of jobId or testConfigId
  * must be provided:
  *   - jobId — run an existing scheduled test job

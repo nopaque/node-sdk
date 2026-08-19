@@ -165,10 +165,42 @@ describe('TestingResource runs', () => {
     expect(calls[0].url).toContain('/testing/mission-test-runs/mtr_1');
   });
 
+  it('waitForRun keeps polling until the verdict is written', async () => {
+    // A run_status_changed{completed} can land before run_completed{outcome}:
+    // separate SQS messages, no ordering guarantee. Polling on status alone
+    // returned that row — outcome undefined, zero steps — on a passing run.
+    const { fetch } = makeQueuedFetch([
+      { body: { id: 'run_1', status: 'completed', stepResults: [] } },
+      { body: { id: 'run_1', status: 'completed', outcome: 'pending', stepResults: [] } },
+      {
+        body: {
+          id: 'run_1',
+          status: 'completed',
+          outcome: 'PASS',
+          stepResults: [{ id: 's1', runId: 'run_1', stepIndex: 0, outcome: 'PASS' }],
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const run = await c.testing.runs.waitForRun('run_1', {
+      timeout: 5000,
+      pollInterval: 1,
+    });
+    expect(run.outcome).toBe('PASS');
+    expect(run.stepResults).toHaveLength(1);
+  });
+
+  it('waitForRun settles immediately on failed, which carries no verdict', async () => {
+    const { fetch } = makeQueuedFetch([{ body: { id: 'run_2', status: 'failed' } }]);
+    const c = client(fetch);
+    const run = await c.testing.runs.waitForRun('run_2', { timeout: 5000, pollInterval: 1 });
+    expect(run.status).toBe('failed');
+  });
+
   it('waitForRun returns on terminal', async () => {
     const { fetch } = makeQueuedFetch([
       { body: { id: 'run_1', jobId: 'job_1', status: 'running' } },
-      { body: { id: 'run_1', jobId: 'job_1', status: 'completed' } },
+      { body: { id: 'run_1', jobId: 'job_1', status: 'completed', outcome: 'PASS' } },
     ]);
     const c = client(fetch);
     const run = await c.testing.runs.waitForRun('run_1', {
@@ -176,6 +208,7 @@ describe('TestingResource runs', () => {
       pollInterval: 1,
     });
     expect(run.status).toBe('completed');
+    expect(run.outcome).toBe('PASS');
   });
 
   it('waitForRun times out', async () => {

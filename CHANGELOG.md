@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-19
+
+### Fixed
+
+- `waitForRun()` could return before the run's verdict was written, giving
+  `outcome: undefined` and no step results on a run that had actually passed.
+  A re-fetch of the same id moments later returned the real verdict. The
+  container emits `run_status_changed{status:'completed'}` and
+  `run_completed{outcome}` as separate SQS messages with no ordering
+  guarantee, and the API skips undefined fields on write, so a status-only
+  message marks the run terminal with no outcome. Polling keyed on `status`
+  alone, so it returned that intermediate row. `completed` now also requires a
+  decided verdict; `failed` and `cancelled` still settle immediately, since
+  neither carries one.
+
+### Added
+
+- `TestStepResult` and `TestRunDetails`. `testing.runs.get()` and
+  `waitForRun()` return `TestRunDetails` — the run row plus `stepResults`,
+  `fullTranscript` and an inline `config` snapshot, all of which the API has
+  always sent and neither SDK declared.
+  - Named `TestStepResult`, not `StepResult`: the latter is already exported
+    for mapping and is an unrelated shape.
+
 ## [0.6.0] - 2026-08-19
 
 ### Fixed
