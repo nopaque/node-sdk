@@ -13,3 +13,4 @@ export * from './missionTests.js';
 export * from './missionTestConfigs.js';
 export * from './compliance.js';
 export * from './digitalTesting.js';
+export * from './surveys.js';

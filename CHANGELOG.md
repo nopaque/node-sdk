@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `surveys` resource for survey tests, where your platform sends the survey and
+  nopaque answers as the respondent.
+  - `surveys.start()`, `stop()` and `list()` over `/testing/survey-runs`.
+    `start()` takes `sender` — the number your survey platform sends from — and
+    sends it as `endUserE164`. `list()` returns the runs plus the workspace's
+    `numbers: { total, busy, free }`.
+  - `surveys.results.list()` / `listPage()` / `get()` over
+    `/testing/survey-results`. A result carries the conversation as `turns`.
+  - `surveys.configs.create()` / `list()` / `get()` / `update()` / `delete()`
+    over `/testing/survey-test-configs`. `configs.list()` is not paginated and
+    returns a plain array.
+  - `surveys.waitForResult(runId)` polls until `capture.status` is `final` or
+    `failed` and returns the result either way. A 404 counts as "not written
+    yet" for `notFoundGrace` (default 60 s). Without a `timeout`, the deadline
+    is the test's `expiresAt` plus 10 minutes. Throws `NopaqueTimeoutError` on
+    the deadline without stopping the test.
+
 ## [0.7.0] - 2026-08-19
 
 ### Fixed

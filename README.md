@@ -55,6 +55,31 @@ const finished = await client.digitalTesting.waitForRun(run.id);
 console.log(finished.status, finished.outcome, finished.passRate);
 ```
 
+### Survey tests
+
+Survey testing reverses the direction: your platform sends the survey, and
+nopaque answers as the respondent. Start a test, point your survey at the
+number it returns, then wait for the conversation.
+
+```ts
+const test = await client.surveys.start({
+  configId: 'cfg_123',
+  sender: '+447700900123', // the number your survey platform sends FROM
+  windowSecs: 300,
+});
+
+// Trigger your survey from `sender` to this number before `expiresAt`.
+console.log('Send the survey to', test.agentE164);
+
+const result = await client.surveys.waitForResult(test.runId);
+// A failed capture is a RESULT, not an error: check `capture.error`.
+console.log(result.outcome, result.capture.status);
+for (const turn of result.turns) console.log(`${turn.from}: ${turn.text}`);
+```
+
+`start()` throws `ConflictError` when the workspace has no free survey number
+for that sender. `surveys.list()` shows how many are free.
+
 ## Features
 
 - Full coverage of the Nopaque REST API via API-key auth

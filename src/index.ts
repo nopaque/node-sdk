@@ -19,3 +19,4 @@ export {
 } from './errors.js';
 export { Page, Paginator } from './pagination.js';
 export type * from './types/index.js';
+export type { SurveysWaitForResultOptions } from './resources/surveys.js';

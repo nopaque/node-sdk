@@ -6,6 +6,7 @@
     "quickstart": "tsx quickstart.ts",
     "mapping": "tsx mappingAndWait.ts",
     "audio": "tsx audioUpload.ts",
+    "surveys": "tsx surveys.ts",
     "cjs": "node commonjs.js"
   },
   "dependencies": {
