@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-30
+
+### Fixed
+
+- An error body carrying `message` instead of `error` now surfaces its text.
+  API Gateway's own 401, 403 and 429 responses, and a few older handlers, send
+  `message`; the SDK read only `error`, so those errors showed as just
+  `HTTP 403` with no reason.
+- `pnpm test:integration` allows 30 s per test. The live-API schedule
+  round-trip makes three calls and could pass Vitest's 5 s default on cold
+  Lambdas.
+
 ### Added
 
 - `surveys` resource for survey tests, where your platform sends the survey and
@@ -226,5 +238,6 @@ client.mapping.create({
 - Typed error class hierarchy.
 - Dual ESM + CJS output with TypeScript definitions.
 
-[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.8.0
 [0.1.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.1.0

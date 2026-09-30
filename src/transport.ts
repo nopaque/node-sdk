@@ -123,7 +123,14 @@ async function classifyResponse(response: Response): Promise<NopaqueAPIError> {
     body = null;
   }
   const bodyObj = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
-  const message = typeof bodyObj.error === 'string' ? bodyObj.error : `HTTP ${response.status}`;
+  // Most handlers send `error`; API Gateway's own 401/403/429 and a few older
+  // handlers send `message`. Without the fallback those surface as "HTTP 403".
+  const message =
+    typeof bodyObj.error === 'string'
+      ? bodyObj.error
+      : typeof bodyObj.message === 'string'
+        ? bodyObj.message
+        : `HTTP ${response.status}`;
   const code = typeof bodyObj.code === 'string' ? bodyObj.code : null;
   const details = bodyObj.details ?? null;
   const requestId = response.headers.get('x-request-id');
