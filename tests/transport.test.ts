@@ -37,6 +37,23 @@ describe('Transport', () => {
     await expect(t.request('GET', '/x')).rejects.toBeInstanceOf(AuthenticationError);
   });
 
+  it('uses a gateway `message` body when there is no `error`', async () => {
+    const { fetch } = makeQueuedFetch([{ status: 403, body: { message: 'Forbidden' } }]);
+    const t = new Transport(resolveConfig({ apiKey: 'k', fetch, maxRetries: 0 }));
+    const err = await t.request('GET', '/profiles').catch((e) => e);
+    expect(err).toBeInstanceOf(NopaqueAPIError);
+    expect((err as NopaqueAPIError).message).toBe('Forbidden');
+  });
+
+  it('prefers `error` over `message`', async () => {
+    const { fetch } = makeQueuedFetch([
+      { status: 404, body: { error: 'from handler', message: 'other' } },
+    ]);
+    const t = new Transport(resolveConfig({ apiKey: 'k', fetch, maxRetries: 0 }));
+    const err = await t.request('GET', '/x').catch((e) => e);
+    expect((err as NopaqueAPIError).message).toBe('from handler');
+  });
+
   it('parses retry-after header on 429', async () => {
     const { fetch } = makeQueuedFetch([
       {
