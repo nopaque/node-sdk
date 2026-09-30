@@ -14,6 +14,7 @@ import { MissionTestConfigsResource } from './resources/missionTestConfigs.js';
 import { MissionTestsResource } from './resources/missionTests.js';
 import { ProfilesResource } from './resources/profiles.js';
 import { SchedulerResource } from './resources/scheduler.js';
+import { SurveysResource } from './resources/surveys.js';
 import { SweepsResource } from './resources/sweeps.js';
 import { TestingResource } from './resources/testing.js';
 
@@ -34,6 +35,7 @@ export class Nopaque {
   readonly digitalTesting: DigitalTestingResource;
   readonly digitalTestConfigs: DigitalTestConfigsResource;
   readonly digitalCompliance: DigitalComplianceResource;
+  readonly surveys: SurveysResource;
 
   private readonly transport: Transport;
 
@@ -56,6 +58,7 @@ export class Nopaque {
     this.digitalTesting = new DigitalTestingResource(this.transport);
     this.digitalTestConfigs = new DigitalTestConfigsResource(this.transport);
     this.digitalCompliance = new DigitalComplianceResource(this.transport);
+    this.surveys = new SurveysResource(this.transport);
   }
 
   close(): void {
