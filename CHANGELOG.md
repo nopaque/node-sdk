@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `audio.createUploadUrl` now requires `sizeBytes`, the exact file size in
+  bytes. The API has refused upload URLs without it since v0.50.0, so a call
+  that left it out already failed with a 400. `audio.upload` was unaffected
+  because it always sent the size.
+
 ### Removed
 
 - `CallTelemetry.cost` is gone. The API no longer returns nopaque's own carrier

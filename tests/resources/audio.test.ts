@@ -63,10 +63,11 @@ describe('AudioResource', () => {
       filename: 'a.wav',
       contentType: 'audio/wav',
       category: 'test',
+      sizeBytes: 1024,
     });
     expect(res.audioId).toBe('aud_xyz');
     expect(calls[0].init.body).toBe(
-      JSON.stringify({ filename: 'a.wav', contentType: 'audio/wav', category: 'test' })
+      JSON.stringify({ filename: 'a.wav', contentType: 'audio/wav', category: 'test', sizeBytes: 1024 })
     );
   });
 

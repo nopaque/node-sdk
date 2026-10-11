@@ -35,6 +35,7 @@ describe.skipIf(!apiKey)('integration smoke (live dev API)', () => {
       filename: 'smoke-test.wav',
       contentType: 'audio/wav',
       category: 'test',
+      sizeBytes: 1024,
     });
     expect(res.uploadUrl).toMatch(/^https:\/\//);
     expect(res.audioId).toBeTruthy();
