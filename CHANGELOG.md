@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `CallTelemetry.cost` is gone. The API no longer returns nopaque's own carrier
+  cost on mapping runs, so `telnyxTotalUsd`, `telnyxCostParts`,
+  `computedDurationSecs`, `computedPerMinuteRateUsd` and `computedCostUsd` are
+  no longer typed. Code reading `callTelemetry.cost` gets `undefined`, as it
+  will from the API.
+
 ## [0.8.0] - 2026-09-30
 
 ### Fixed
