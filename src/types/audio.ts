@@ -41,7 +41,8 @@ export interface CreateUploadUrlRequest {
   /** Defaults server-side to the generated audioId when omitted. */
   associatedId?: string;
   durationSecs?: number;
-  sizeBytes?: number;
+  /** Exact file size in bytes. Required by the API (maximum 50 MB). */
+  sizeBytes: number;
 }
 
 export interface AudioListParams {
