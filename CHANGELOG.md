@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-11
+
 ### Changed
 
 - `audio.createUploadUrl` now requires `sizeBytes`, the exact file size in
@@ -253,6 +255,7 @@ client.mapping.create({
 - Typed error class hierarchy.
 - Dual ESM + CJS output with TypeScript definitions.
 
-[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.0
 [0.8.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.8.0
 [0.1.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.1.0
