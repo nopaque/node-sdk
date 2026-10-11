@@ -107,20 +107,6 @@ export interface CallTelemetry {
     telnyxRecordingId?: string;
     [key: string]: unknown;
   };
-  cost?: {
-    telnyxTotalUsd?: number;
-    telnyxCostParts?: Array<{
-      part: string;
-      billedSecs: number;
-      costUsd: number;
-      currency: string;
-      rate?: number;
-    }>;
-    computedDurationSecs?: number;
-    computedPerMinuteRateUsd?: number;
-    computedCostUsd?: number;
-    [key: string]: unknown;
-  };
   timing?: {
     dialedAt?: string;
     answeredAt?: string;
