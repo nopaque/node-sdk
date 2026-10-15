@@ -57,8 +57,10 @@ describe('MissionTestConfigsResource', () => {
   it('list returns slim items, sends filters and follows nextCursor', async () => {
     const slim = { id: 'cfg_1', workspaceId: 'w', name: 'qa', sector: 'insurance', profileId: 'p_1', createdAt: '', updatedAt: '' };
     const { fetch, calls } = makeQueuedFetch([
-      { body: { items: [slim], nextCursor: 'C2' } },
-      { body: { items: [{ ...slim, id: 'cfg_2' }], nextCursor: null } },
+      // The api's real envelope: `{configs, nextCursor}`. 2026-10-15 Walgreens:
+      // list({ name }) returned nothing because the SDK read `items`.
+      { body: { configs: [slim], nextCursor: 'C2' } },
+      { body: { configs: [{ ...slim, id: 'cfg_2' }] } },
     ]);
     const c = client(fetch);
     const ids: string[] = [];

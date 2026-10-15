@@ -8,14 +8,28 @@ import type {
   MissionTestRun,
 } from '../types/missionTests.js';
 
+// The api returns `{runs, nextCursor}` and pages on `cursor`; the paginator
+// works in `{items, nextToken}`, so both directions are translated here.
+type RunsPage = { runs?: MissionTestRun[]; nextCursor?: string | null };
+
+function toQuery(params: MissionTestListParams & { nextToken?: string }) {
+  const { nextToken, cursor, ...rest } = params;
+  return { ...rest, cursor: cursor ?? nextToken };
+}
+
 export class MissionTestsResource extends Resource {
   list(
     params: MissionTestListParams = {},
     requestOptions?: RequestOptions
   ): Paginator<MissionTestRun> {
     return new Paginator<MissionTestRun>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/testing/mission-tests', { params: p, requestOptions }),
+      fetchPage: async (p) => {
+        const raw = await this.transport.request<RunsPage>('GET', '/testing/mission-tests', {
+          params: toQuery(p as MissionTestListParams),
+          requestOptions,
+        });
+        return { items: raw.runs ?? [], nextToken: raw.nextCursor ?? null };
+      },
       params: { ...params },
     });
   }
@@ -24,12 +38,11 @@ export class MissionTestsResource extends Resource {
     params: MissionTestListParams = {},
     requestOptions?: RequestOptions
   ): Promise<Page<MissionTestRun>> {
-    const raw = await this.transport.request<{ items: MissionTestRun[]; nextToken: string | null }>(
-      'GET',
-      '/testing/mission-tests',
-      { params, requestOptions },
-    );
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<RunsPage>('GET', '/testing/mission-tests', {
+      params: toQuery(params),
+      requestOptions,
+    });
+    return new Page(raw.runs ?? [], raw.nextCursor ?? null);
   }
 
   async create(

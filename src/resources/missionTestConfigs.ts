@@ -20,15 +20,15 @@ export class MissionTestConfigsResource extends Resource {
         const { nextToken, cursor, ...rest } = p as MissionTestConfigListParams & {
           nextToken?: string;
         };
+        // The api returns `{configs, nextCursor}` (listMissionTestConfigs).
         const raw = await this.transport.request<{
-          items?: MissionTestConfigListItem[];
+          configs?: MissionTestConfigListItem[];
           nextCursor?: string | null;
-          nextToken?: string | null;
         }>('GET', '/testing/mission-test-configs', {
           params: { ...rest, cursor: cursor ?? nextToken },
           requestOptions,
         });
-        return { items: raw.items ?? [], nextToken: raw.nextCursor ?? raw.nextToken ?? null };
+        return { items: raw.configs ?? [], nextToken: raw.nextCursor ?? null };
       },
       params: { ...params },
     });
@@ -40,14 +40,13 @@ export class MissionTestConfigsResource extends Resource {
   ): Promise<Page<MissionTestConfigListItem>> {
     const { nextToken, cursor, ...rest } = params;
     const raw = await this.transport.request<{
-      items?: MissionTestConfigListItem[];
+      configs?: MissionTestConfigListItem[];
       nextCursor?: string | null;
-      nextToken?: string | null;
     }>('GET', '/testing/mission-test-configs', {
       params: { ...rest, cursor: cursor ?? nextToken },
       requestOptions,
     });
-    return new Page(raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);
+    return new Page(raw.configs ?? [], raw.nextCursor ?? null);
   }
 
   async create(
