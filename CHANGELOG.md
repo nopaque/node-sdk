@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-15
+
+### Fixed
+
+- `missionTestConfigs.list()` / `listPage()` returned nothing. The API
+  responds with `{configs, nextCursor}`, but the SDK read `items`, so every
+  call came back empty whatever the filters.
+- `missionTests.list()` / `listPage()` returned nothing, for the same
+  reason (`runs` rather than `items`). They also paged with `nextToken`,
+  where the API takes `cursor` and returns `nextCursor`, so only the first
+  page was reachable. `MissionTestListParams` now also accepts `cursor`.
+- `compliance.listReports()` / `listReportsPage()` returned nothing
+  (`audits` rather than `items`). The API nests the counts under `summary`;
+  they are still exposed as `passed`, `failed` and `total`.
+- The `MissionTestRun` type now matches what the API returns. Only `id`,
+  `workspaceId` and `status` are required. `profile` is the profile ID
+  string, and `status` includes `'pending'`. It also gains `testType`,
+  `startedAt`, `completedAt`, `phoneNumber`, `configId`, `voiceId`, `passed`,
+  `passReasoning`, `passEvidence` and `errorMessage`.
+
 ## [0.9.0] - 2026-10-11
 
 ### Changed
@@ -255,7 +275,8 @@ client.mapping.create({
 - Typed error class hierarchy.
 - Dual ESM + CJS output with TypeScript definitions.
 
-[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.1
 [0.9.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.0
 [0.8.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.8.0
 [0.1.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.1.0

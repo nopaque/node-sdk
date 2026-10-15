@@ -42,10 +42,11 @@ describe('MissionTestsResource', () => {
   });
 
   it('list returns a paginator', async () => {
-    const { fetch } = makeQueuedFetch([
+    // The api's real envelope is `{runs, nextCursor}`, and it pages on `cursor`.
+    const { fetch, calls } = makeQueuedFetch([
       {
         body: {
-          items: [
+          runs: [
             {
               id: 'mt_1',
               workspaceId: 'w',
@@ -59,14 +60,51 @@ describe('MissionTestsResource', () => {
               updatedAt: '',
             },
           ],
-          nextToken: null,
+          nextCursor: 'C2',
+        },
+      },
+      {
+        body: {
+          runs: [{ id: 'mt_2', workspaceId: 'w', testType: 'mission', status: 'pending', startedAt: '' }],
         },
       },
     ]);
     const c = client(fetch);
     const ids: string[] = [];
     for await (const item of c.missionTests.list({ limit: 10 })) ids.push(item.id);
-    expect(ids).toEqual(['mt_1']);
+    expect(ids).toEqual(['mt_1', 'mt_2']);
+    expect(calls[1].url).toContain('cursor=C2');
+    expect(calls[1].url).not.toContain('nextToken');
+  });
+
+  it('list returns a run launched from a saved config as the api sends it', async () => {
+    // Shape of prod run 2bd58510: no kind/createdAt/updatedAt, `profile` is the
+    // profile ID string, status "cancelled".
+    const { fetch } = makeQueuedFetch([
+      {
+        body: {
+          runs: [
+            {
+              id: '2bd58510',
+              workspaceId: 'w',
+              testType: 'mission',
+              status: 'cancelled',
+              startedAt: '2026-10-15T16:41:15.941Z',
+              completedAt: '2026-10-15T16:42:55.605Z',
+              configId: 'cfg_1',
+              profile: 'profile_abc',
+            },
+          ],
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const runs = [];
+    for await (const r of c.missionTests.list()) runs.push(r);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].status).toBe('cancelled');
+    expect(runs[0].profile).toBe('profile_abc');
+    expect(runs[0].configId).toBe('cfg_1');
   });
 
   it('getDefaults returns defaults', async () => {

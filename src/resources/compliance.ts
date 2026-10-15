@@ -20,6 +20,25 @@ function encodePhone(phoneNumber: string): string {
   return encodeURIComponent(phoneNumber);
 }
 
+// The api returns `{audits}` in one response (no cursor), with the counts
+// nested under `summary` (openapi ComplianceAuditSummary). They are flattened
+// so `passed`, `failed` and `total` stay the SDK's interface.
+type AuditSummary = {
+  phoneNumber: string;
+  summary?: { ran: number; passed: number; failed: number };
+  lastRunAt: string;
+};
+
+function toReportListItem(a: AuditSummary): ComplianceReportListItem {
+  const { summary, ...rest } = a;
+  return {
+    ...rest,
+    passed: summary?.passed ?? 0,
+    failed: summary?.failed ?? 0,
+    total: summary?.ran ?? 0,
+  };
+}
+
 export class ComplianceResource extends Resource {
   async getCatalogue(
     params: { sector?: string } = {},
@@ -43,8 +62,14 @@ export class ComplianceResource extends Resource {
     requestOptions?: RequestOptions,
   ): Paginator<ComplianceReportListItem> {
     return new Paginator<ComplianceReportListItem>({
-      fetchPage: async (p) =>
-        await this.transport.request('GET', '/testing/compliance-reports', { params: p, requestOptions }),
+      fetchPage: async (p) => {
+        const raw = await this.transport.request<{ audits?: AuditSummary[] }>(
+          'GET',
+          '/testing/compliance-reports',
+          { params: p, requestOptions },
+        );
+        return { items: (raw.audits ?? []).map(toReportListItem), nextToken: null };
+      },
       params: { ...params },
     });
   }
@@ -53,11 +78,12 @@ export class ComplianceResource extends Resource {
     params: ComplianceReportListParams = {},
     requestOptions?: RequestOptions,
   ): Promise<Page<ComplianceReportListItem>> {
-    const raw = await this.transport.request<{
-      items: ComplianceReportListItem[];
-      nextToken: string | null;
-    }>('GET', '/testing/compliance-reports', { params, requestOptions });
-    return new Page(raw.items, raw.nextToken);
+    const raw = await this.transport.request<{ audits?: AuditSummary[] }>(
+      'GET',
+      '/testing/compliance-reports',
+      { params, requestOptions },
+    );
+    return new Page((raw.audits ?? []).map(toReportListItem), null);
   }
 
   async getReport(phoneNumber: string, requestOptions?: RequestOptions): Promise<ComplianceReport> {

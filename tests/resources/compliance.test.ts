@@ -57,20 +57,28 @@ describe('ComplianceResource', () => {
   });
 
   it('listReports paginates', async () => {
+    // The api's real shape (openapi ComplianceAuditSummary): `{audits}`, counts
+    // nested under `summary`, no cursor. The fixture used to say
+    // `{items, nextToken}` with flat counts, so this passed while the SDK
+    // returned nothing against the live api.
     const { fetch } = makeQueuedFetch([
       {
         body: {
-          items: [
-            { phoneNumber: '+441234', passed: 2, failed: 3, total: 5, lastRunAt: '' },
+          audits: [
+            {
+              phoneNumber: '+441234',
+              summary: { ran: 5, passed: 2, failed: 3 },
+              lastRunAt: '2026-05-03T10:00:00.000Z',
+            },
           ],
-          nextToken: null,
         },
       },
     ]);
     const c = client(fetch);
-    const out: string[] = [];
-    for await (const r of c.compliance.listReports()) out.push(r.phoneNumber);
-    expect(out).toEqual(['+441234']);
+    const out = [];
+    for await (const r of c.compliance.listReports()) out.push(r);
+    expect(out.map((r) => r.phoneNumber)).toEqual(['+441234']);
+    expect([out[0].passed, out[0].failed, out[0].total]).toEqual([2, 3, 5]);
   });
 
   it('getReport URL-encodes the phone number leading +', async () => {
