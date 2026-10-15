@@ -52,7 +52,18 @@ export interface MissionTestDefaults {
   catalogueVersion: string;
 }
 
+/** Filters for GET /testing/mission-tests. All are applied server-side. */
 export interface MissionTestListParams {
+  /** `'freeform'` (missions) or `'compliance'`. */
+  kind?: MissionTestKind;
+  /** Only runs launched from this mission test config. Needs the API's `configId` filter. */
+  configId?: string;
+  /** Case-insensitive text search on the run's sector or mission. */
+  q?: string;
+  /** Substring match on the number called. */
+  phoneNumber?: string;
+  /** Runs whose config has ANY of these tags. A comma-separated string or an array. */
+  tags?: string | string[];
   limit?: number;
   /** Cursor from a previous page's `nextToken`. */
   nextToken?: string;

@@ -13,8 +13,12 @@ import type {
 type RunsPage = { runs?: MissionTestRun[]; nextCursor?: string | null };
 
 function toQuery(params: MissionTestListParams & { nextToken?: string }) {
-  const { nextToken, cursor, ...rest } = params;
-  return { ...rest, cursor: cursor ?? nextToken };
+  const { nextToken, cursor, tags, ...rest } = params;
+  return {
+    ...rest,
+    tags: Array.isArray(tags) ? tags.join(',') : tags,
+    cursor: cursor ?? nextToken,
+  };
 }
 
 export class MissionTestsResource extends Resource {

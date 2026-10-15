@@ -179,4 +179,43 @@ describe('MissionTestsResource', () => {
     expect(calls[0].url).toContain('/testing/mission-tests/mt_1/cancel');
     expect(calls[0].init.method).toBe('POST');
   });
+
+  // 2026-10-15 Walgreens: "can you use the filtering with listing runs?"
+  it('list sends every filter server-side and keeps them on later pages', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { runs: [{ id: 'mt_1', workspaceId: 'w', status: 'completed' }], nextCursor: 'C2' } },
+      { body: { runs: [{ id: 'mt_2', workspaceId: 'w', status: 'completed' }] } },
+    ]);
+    const c = client(fetch);
+    const ids: string[] = [];
+    for await (const r of c.missionTests.list({
+      kind: 'freeform',
+      configId: 'cfg_1',
+      q: 'covid',
+      phoneNumber: '3301900',
+      tags: ['vax', 'regression'],
+    })) ids.push(r.id);
+
+    expect(ids).toEqual(['mt_1', 'mt_2']);
+    for (const call of calls) {
+      const u = new URL(call.url);
+      expect(u.searchParams.get('kind')).toBe('freeform');
+      expect(u.searchParams.get('configId')).toBe('cfg_1');
+      expect(u.searchParams.get('q')).toBe('covid');
+      expect(u.searchParams.get('phoneNumber')).toBe('3301900');
+      expect(u.searchParams.get('tags')).toBe('vax,regression');
+    }
+    expect(new URL(calls[1].url).searchParams.get('cursor')).toBe('C2');
+  });
+
+  it('listPage accepts tags as a string and omits unset filters', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { runs: [] } }]);
+    const c = client(fetch);
+    const page = await c.missionTests.listPage({ tags: 'vax', limit: 5 });
+    expect(page.items).toEqual([]);
+    const u = new URL(calls[0].url);
+    expect(u.searchParams.get('tags')).toBe('vax');
+    expect(u.searchParams.has('configId')).toBe(false);
+    expect(u.searchParams.has('cursor')).toBe(false);
+  });
 });
