@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-15
+
+### Added
+
+- `missionTests.list()` / `listPage()` take server-side filters:
+  - `kind`: `'freeform'` (missions) or `'compliance'`.
+  - `configId`: only runs launched from that mission test config. Needs the
+    API's `configId` filter (api#1004); an API without it ignores the
+    parameter and returns all runs.
+  - `q`: case-insensitive text search on the run's sector or mission.
+  - `phoneNumber`: substring match on the number called.
+  - `tags`: runs whose config has any of these tags (a string or an array).
+
+  Filters apply on every page, so a match deep in the history is still found.
+
 ## [0.9.1] - 2026-10-15
 
 ### Fixed
@@ -275,7 +290,8 @@ client.mapping.create({
 - Typed error class hierarchy.
 - Dual ESM + CJS output with TypeScript definitions.
 
-[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.10.0
 [0.9.1]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.1
 [0.9.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.0
 [0.8.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.8.0
