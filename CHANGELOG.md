@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-25
+
 ### Added
 
 - Bring your own carrier (invite-only): `testing.carrierIntegrations` lists
@@ -311,7 +313,8 @@ client.mapping.create({
 - Typed error class hierarchy.
 - Dual ESM + CJS output with TypeScript definitions.
 
-[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.11.0
 [0.10.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.10.0
 [0.9.1]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.1
 [0.9.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.9.0
