@@ -80,6 +80,52 @@ for (const turn of result.turns) console.log(`${turn.from}: ${turn.text}`);
 `start()` throws `ConflictError` when the workspace has no free survey number
 for that sender. `surveys.list()` shows how many are free.
 
+### Bring your own carrier
+
+Invite-only. With bring your own carrier (BYOC), a test config's calls go out over your workspace's own SIP
+trunk instead of nopaque's network. nopaque sets up the trunks (carrier
+integrations) with you. You add routes to them, then point a test config at a route
+with `carrierRouteId`.
+
+```ts
+// Your trunks, each with its routes.
+const [trunk] = await client.testing.carrierIntegrations.list();
+console.log(trunk.name, trunk.status, trunk.routes.map((r) => r.name));
+
+// A route is selected by the tech prefix dialled in front of the number.
+const route = await client.testing.carrierIntegrations.routes.create(trunk.integrationId, {
+  name: 'Vendor X premium',
+  techPrefix: 'R7Q2#',
+});
+console.log('dialable now:', route.dialable); // needs an `active` trunk
+
+const config = await client.testing.configs.create({
+  name: 'Main menu via own trunk',
+  phoneNumber: '+441234567890',
+  carrierRouteId: route.routeId,
+  steps: [
+    { name: 'Main menu', type: 'dtmf', expected: 'Press 1 for sales', dtmf: '1' },
+    { name: 'Sales', type: 'listen', expected: 'Connecting you to sales' },
+  ],
+});
+
+// The run dials the config's own phoneNumber, through the route or not at all.
+const run = await client.testing.runs.create({ testConfigId: config.id });
+const done = await client.testing.runs.waitForRun(run.id);
+
+console.log(done.outcome, done.carrier); // { integrationId, routeId }
+console.log('hang-up:', done.callTelemetry?.telephony?.sipHangupCause);
+for (const step of done.stepResults ?? []) {
+  console.log(step.actionType, step.actionValue, step.outcome);
+}
+```
+
+If the route cannot be dialled when the run starts (the route is disabled or
+the trunk is not active), `runs.create()` throws `ConflictError` (409) and no
+call is placed. Once the trunk has used its `dailyMinutes` for the day, it throws
+`RateLimitError` (429) until 00:00 UTC. To stop a route being used, call
+`routes.update(integrationId, routeId, { enabled: false })`.
+
 ## Features
 
 - Full coverage of the Nopaque REST API via API-key auth

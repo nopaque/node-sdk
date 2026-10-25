@@ -4,6 +4,9 @@ import type { RequestOptions } from '../requestOptions.js';
 import { Paginator, Page } from '../pagination.js';
 import { waitFor } from '../polling.js';
 import type {
+  CarrierIntegration,
+  CarrierRoute,
+  CreateCarrierRouteRequest,
   CreateTestConfigRequest,
   CreateTestJobRequest,
   CreateTestRunRequest,
@@ -18,6 +21,7 @@ import type {
   TestRunAggregateResponse,
   TestRunListItem,
   TestRunListParams,
+  UpdateCarrierRouteRequest,
   UpdateTestConfigRequest,
 } from '../types/testing.js';
 
@@ -240,16 +244,114 @@ export class TestingRunsResource extends Resource {
   }
 }
 
+/**
+ * Routes on a carrier integration (bring-your-own-carrier, invite-only). Put a
+ * route's `routeId` on a test config as `carrierRouteId` to dial through it.
+ */
+export class TestingCarrierRoutesResource extends Resource {
+  /** GET /testing/carrier-integrations/{integrationId}/routes — sorted by name, not paginated. */
+  async list(integrationId: string, requestOptions?: RequestOptions): Promise<CarrierRoute[]> {
+    const raw = await this.transport.request<{ routes?: CarrierRoute[] }>(
+      'GET',
+      `/testing/carrier-integrations/${encodeURIComponent(integrationId)}/routes`,
+      { requestOptions }
+    );
+    return raw.routes ?? [];
+  }
+
+  /** GET /testing/carrier-integrations/{integrationId}/routes/{routeId} */
+  async get(
+    integrationId: string,
+    routeId: string,
+    requestOptions?: RequestOptions
+  ): Promise<CarrierRoute> {
+    const raw = await this.transport.request<{ route: CarrierRoute }>(
+      'GET',
+      `/testing/carrier-integrations/${encodeURIComponent(integrationId)}/routes/${encodeURIComponent(routeId)}`,
+      { requestOptions }
+    );
+    return raw.route;
+  }
+
+  /** POST /testing/carrier-integrations/{integrationId}/routes — returns the new route. */
+  async create(
+    integrationId: string,
+    body: CreateCarrierRouteRequest,
+    requestOptions?: RequestOptions
+  ): Promise<CarrierRoute> {
+    const raw = await this.transport.request<{ route: CarrierRoute }>(
+      'POST',
+      `/testing/carrier-integrations/${encodeURIComponent(integrationId)}/routes`,
+      { body, requestOptions }
+    );
+    return raw.route;
+  }
+
+  /**
+   * PATCH /testing/carrier-integrations/{integrationId}/routes/{routeId} — send
+   * only what changes. `enabled: false` turns the route off: runs that name it
+   * are refused, never dialled another way.
+   */
+  async update(
+    integrationId: string,
+    routeId: string,
+    body: UpdateCarrierRouteRequest,
+    requestOptions?: RequestOptions
+  ): Promise<CarrierRoute> {
+    const raw = await this.transport.request<{ route: CarrierRoute }>(
+      'PATCH',
+      `/testing/carrier-integrations/${encodeURIComponent(integrationId)}/routes/${encodeURIComponent(routeId)}`,
+      { body, requestOptions }
+    );
+    return raw.route;
+  }
+}
+
+/**
+ * The workspace's own SIP trunks (bring-your-own-carrier, invite-only). Set up
+ * by nopaque with you; read-only here apart from their routes.
+ */
+export class TestingCarrierIntegrationsResource extends Resource {
+  readonly routes: TestingCarrierRoutesResource;
+
+  constructor(transport: Transport) {
+    super(transport);
+    this.routes = new TestingCarrierRoutesResource(transport);
+  }
+
+  /** GET /testing/carrier-integrations — sorted by name, each with its `routes`. Not paginated. */
+  async list(requestOptions?: RequestOptions): Promise<CarrierIntegration[]> {
+    const raw = await this.transport.request<{ integrations?: CarrierIntegration[] }>(
+      'GET',
+      '/testing/carrier-integrations',
+      { requestOptions }
+    );
+    return raw.integrations ?? [];
+  }
+
+  /** GET /testing/carrier-integrations/{integrationId} — the integration with its `routes`. */
+  async get(integrationId: string, requestOptions?: RequestOptions): Promise<CarrierIntegration> {
+    const raw = await this.transport.request<{ integration: CarrierIntegration }>(
+      'GET',
+      `/testing/carrier-integrations/${encodeURIComponent(integrationId)}`,
+      { requestOptions }
+    );
+    return raw.integration;
+  }
+}
+
 export class TestingResource extends Resource {
   readonly configs: TestingConfigsResource;
   readonly jobs: TestingJobsResource;
   readonly runs: TestingRunsResource;
+  readonly carrierIntegrations: TestingCarrierIntegrationsResource;
 
   constructor(transport: Transport) {
     super(transport);
     this.configs = new TestingConfigsResource(transport);
     this.jobs = new TestingJobsResource(transport);
     this.runs = new TestingRunsResource(transport);
+    this.carrierIntegrations = new TestingCarrierIntegrationsResource(transport);
   }
 
   /** Paginated, filtered list of test runs (alias for `testing.runs.list()`). */

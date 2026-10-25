@@ -1,3 +1,5 @@
+import type { CallTelemetry } from './telemetry.js';
+
 export interface TestStep {
   name?: string;
   action?: string;
@@ -18,6 +20,15 @@ export interface TestConfig {
   name: string;
   phoneNumber: string;
   steps: TestStep[];
+  /**
+   * Bring-your-own-carrier (invite-only). Dial this config's calls through one
+   * of the workspace's carrier routes, over the workspace's own SIP trunk,
+   * instead of nopaque's network. Omitted when the config dials normally.
+   * A config with a route dials through it or not at all: if the route cannot
+   * be dialled when a run starts, the run is refused and the number is never
+   * called normally.
+   */
+  carrierRouteId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -26,12 +37,30 @@ export interface CreateTestConfigRequest {
   name: string;
   phoneNumber: string;
   steps: TestStep[];
+  /**
+   * Bring-your-own-carrier (invite-only). Dial this config's calls through one
+   * of the workspace's carrier routes, over the workspace's own SIP trunk,
+   * instead of nopaque's network. Use a route's `routeId` from
+   * `testing.carrierIntegrations`. A config with a route dials through it or
+   * not at all: if the route cannot be dialled when a run starts, the run is
+   * refused and the number is never called normally. The route is checked on
+   * save: 400 if it cannot be dialled, 503 if it could not be looked up.
+   */
+  carrierRouteId?: string;
 }
 
 export interface UpdateTestConfigRequest {
   name?: string;
   phoneNumber?: string;
   steps?: TestStep[];
+  /**
+   * Bring-your-own-carrier (invite-only): dial this config's calls through one
+   * of the workspace's carrier routes, over the workspace's own SIP trunk.
+   * Pass a `routeId`, `null` or `''` to remove the route (the number is then
+   * dialled normally and must pass the dial policy on its own), or omit to
+   * leave it unchanged.
+   */
+  carrierRouteId?: string | null;
 }
 
 export interface TestingListParams {
@@ -92,7 +121,24 @@ export interface TestRun {
   totalSteps?: number;
   passedSteps?: number;
   failedSteps?: number;
+  /**
+   * Call-level telemetry. The hang-up cause is in `callTelemetry.telephony`:
+   * `hangupCause`, `hangupSource` and `sipHangupCause`.
+   */
+  callTelemetry?: CallTelemetry;
+  /**
+   * Bring-your-own-carrier (invite-only): the carrier route this run was
+   * dialled through, recorded at dispatch. It still names that route after
+   * the config's `carrierRouteId` changes. Absent when dialled normally.
+   */
+  carrier?: TestRunCarrier;
   [key: string]: unknown;
+}
+
+/** The carrier route a bring-your-own-carrier run was dialled through. */
+export interface TestRunCarrier {
+  integrationId: string;
+  routeId: string;
 }
 
 /**
@@ -281,4 +327,96 @@ export interface ListVoicesResponse {
    * if no voice is flagged default.
    */
   defaultVoiceId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Bring your own carrier (invite-only)
+// ---------------------------------------------------------------------------
+
+/** An `X-` SIP header sent on the INVITE, for SBCs that route on a header. */
+export interface CarrierCustomHeader {
+  /** Matches `^X-[A-Za-z0-9-]{1,64}$`. */
+  name: string;
+  /** 1..256 characters, no line breaks. */
+  value: string;
+}
+
+/**
+ * One vendor reached through a carrier integration, selected by its tech
+ * prefix. Put its `routeId` on a test config as `carrierRouteId` to dial
+ * through it.
+ */
+export interface CarrierRoute {
+  routeId: string;
+  integrationId: string;
+  name: string;
+  /**
+   * Dialled in front of the destination number
+   * (`sip:{techPrefix}{e164}@{host}:{port}`). Empty means the trunk's default
+   * route. Matches `^[0-9A-Za-z#*]{0,16}$`.
+   */
+  techPrefix: string;
+  customHeaders: CarrierCustomHeader[];
+  enabled: boolean;
+  /**
+   * Whether a run naming this route would be placed now: the route is enabled
+   * and its integration is `active`. Checked again when a run starts.
+   */
+  dialable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CarrierIntegrationStatus = 'draft' | 'verified' | 'active' | 'disabled';
+
+/**
+ * One of the workspace's own SIP trunks. Set up and managed by nopaque with
+ * you; read-only through the API. Credentials are never returned:
+ * `hasCredentials` says whether the trunk uses digest authentication.
+ */
+export interface CarrierIntegration {
+  integrationId: string;
+  name: string;
+  /** The SBC's hostname or IPv4 address. */
+  host: string;
+  port: number;
+  transport: 'UDP' | 'TCP' | 'TLS';
+  mediaEncryption: 'disabled' | 'SRTP';
+  /** Caller ID sent on the INVITE, when set. */
+  fromNumber?: string;
+  status: CarrierIntegrationStatus;
+  verifiedAt?: string;
+  hasCredentials: boolean;
+  /** Calls in flight on this trunk at once (1..20). */
+  maxConcurrentCalls: number;
+  /** Connected minutes per UTC day across this trunk (1..10000). */
+  dailyMinutes: number;
+  createdAt: string;
+  updatedAt: string;
+  /** Sorted by name. Includes routes that cannot be dialled; see `dialable`. */
+  routes: CarrierRoute[];
+}
+
+/** Body for `POST /testing/carrier-integrations/{integrationId}/routes`. */
+export interface CreateCarrierRouteRequest {
+  /** 1..100 characters. */
+  name: string;
+  /** Defaults to `''` (the trunk's default route). */
+  techPrefix?: string;
+  /** Up to 10. Defaults to `[]`. */
+  customHeaders?: CarrierCustomHeader[];
+  /** Defaults to `true`. */
+  enabled?: boolean;
+}
+
+/**
+ * Body for `PATCH /testing/carrier-integrations/{integrationId}/routes/{routeId}`.
+ * Send only what changes; at least one field. `enabled: false` turns the route
+ * off: runs that name it are refused, never dialled another way.
+ */
+export interface UpdateCarrierRouteRequest {
+  name?: string;
+  techPrefix?: string;
+  customHeaders?: CarrierCustomHeader[];
+  enabled?: boolean;
 }
