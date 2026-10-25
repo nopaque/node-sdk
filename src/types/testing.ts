@@ -15,6 +15,8 @@ export interface TestStep {
   [key: string]: unknown;
 }
 
+export type TestConfigType = 'standard' | 'parameterized';
+
 export interface TestConfig {
   id: string;
   name: string;
@@ -29,6 +31,21 @@ export interface TestConfig {
    * called normally.
    */
   carrierRouteId?: string;
+  /** Free-text description shown with the config. */
+  description?: string;
+  /** `parameterized` configs take per-run parameters (see `requiredParameters`). Defaults to `standard`. */
+  type?: TestConfigType;
+  /** Profile whose data and voice items steps can reference. */
+  profileId?: string;
+  /** Parameter names a run of a `parameterized` config must supply. */
+  requiredParameters?: string[];
+  /** Schedule this config runs on, when it has one. */
+  scheduleId?: string;
+  /** Whole-call ceiling in seconds (30–1800). The tester's default of 300 applies when unset. */
+  maxDurationSecs?: number;
+  workspaceId?: string;
+  version?: number;
+  createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -47,6 +64,21 @@ export interface CreateTestConfigRequest {
    * save: 400 if it cannot be dialled, 503 if it could not be looked up.
    */
   carrierRouteId?: string;
+  /** Free-text description shown with the config. */
+  description?: string;
+  /** `parameterized` configs take per-run parameters (see `requiredParameters`). Defaults to `standard`. */
+  type?: TestConfigType;
+  /** Profile whose data and voice items steps can reference. */
+  profileId?: string;
+  /** Parameter names a run of a `parameterized` config must supply. */
+  requiredParameters?: string[];
+  /** Run this config on a schedule. */
+  scheduleId?: string;
+  /**
+   * Whole-call ceiling in seconds (30–1800). When omitted the tester applies
+   * its default of 300. Every `hold` step's `durationSecs` must fit inside it.
+   */
+  maxDurationSecs?: number;
 }
 
 export interface UpdateTestConfigRequest {
@@ -61,6 +93,18 @@ export interface UpdateTestConfigRequest {
    * leave it unchanged.
    */
   carrierRouteId?: string | null;
+  /** Free-text description shown with the config. */
+  description?: string;
+  /** `parameterized` configs take per-run parameters (see `requiredParameters`). Defaults to `standard`. */
+  type?: TestConfigType;
+  /** Profile whose data and voice items steps can reference. */
+  profileId?: string;
+  /** Parameter names a run of a `parameterized` config must supply. */
+  requiredParameters?: string[];
+  /** A schedule id, `null` to unlink the schedule, or omit to leave it unchanged. */
+  scheduleId?: string | null;
+  /** Seconds (30–1800), `null` to go back to the default of 300, or omit to leave it unchanged. */
+  maxDurationSecs?: number | null;
 }
 
 export interface TestingListParams {

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `testing.configs.create()` and `update()` take every config field the API
+  accepts: `description`, `type`, `profileId`, `requiredParameters`,
+  `scheduleId` and `maxDurationSecs`. On update, `scheduleId: null` unlinks
+  the schedule and `maxDurationSecs: null` goes back to the default of 300.
+  `TestConfig` returns them, plus `workspaceId`, `version` and `createdBy`.
+
 ## [0.11.0] - 2026-10-25
 
 ### Added

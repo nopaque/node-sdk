@@ -367,6 +367,36 @@ describe('TestingResource carrierIntegrations.routes', () => {
   });
 });
 
+describe('TestingResource config fields', () => {
+  it('configs.create sends every config field the API takes', async () => {
+    const body = {
+      name: 'Billing menu',
+      phoneNumber: '+442071234567',
+      steps: [],
+      description: 'Checks option 2',
+      type: 'parameterized' as const,
+      profileId: 'prof_1',
+      requiredParameters: ['accountNumber'],
+      scheduleId: 'sch_1',
+      maxDurationSecs: 600,
+    };
+    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'cfg_1', ...body, version: 1, workspaceId: 'ws_1' } }]);
+    const created = await client(fetch).testing.configs.create(body);
+    expect(JSON.parse(calls[0].init.body as string)).toEqual(body);
+    expect(created.maxDurationSecs).toBe(600);
+    expect(created.version).toBe(1);
+  });
+
+  it('configs.update sends only what is given, and null clears schedule and duration', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'cfg_1' } }, { body: { id: 'cfg_1' } }]);
+    const c = client(fetch);
+    await c.testing.configs.update('cfg_1', { description: 'New', maxDurationSecs: 900 });
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ description: 'New', maxDurationSecs: 900 });
+    await c.testing.configs.update('cfg_1', { scheduleId: null, maxDurationSecs: null });
+    expect(JSON.parse(calls[1].init.body as string)).toEqual({ scheduleId: null, maxDurationSecs: null });
+  });
+});
+
 describe('TestingResource carrier fields', () => {
   it('configs.create sends carrierRouteId; update can clear it with null', async () => {
     const cfg = { id: 'cfg_1', name: 'F', phoneNumber: '+441', steps: [], carrierRouteId: 'rt_1' };
