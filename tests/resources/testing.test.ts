@@ -257,3 +257,172 @@ describe('TestingResource.listVoices', () => {
     expect(r.defaultVoiceId).toBe('Telnyx.Ultra.c8f7835e-28a3-4f0c-80d7-c1302ac62aae');
   });
 });
+
+const route = {
+  routeId: 'rt_1',
+  integrationId: 'ci_1',
+  name: 'Vendor X',
+  techPrefix: 'R7Q2#',
+  customHeaders: [],
+  enabled: true,
+  dialable: true,
+  createdAt: '2026-10-01T00:00:00Z',
+  updatedAt: '2026-10-01T00:00:00Z',
+};
+
+const integration = {
+  integrationId: 'ci_1',
+  name: 'London SBC',
+  host: 'sbc.example.net',
+  port: 5060,
+  transport: 'UDP',
+  mediaEncryption: 'disabled',
+  status: 'active',
+  hasCredentials: false,
+  maxConcurrentCalls: 5,
+  dailyMinutes: 300,
+  createdAt: '2026-10-01T00:00:00Z',
+  updatedAt: '2026-10-01T00:00:00Z',
+  routes: [route],
+};
+
+describe('TestingResource carrierIntegrations', () => {
+  it('list unwraps {integrations}', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { integrations: [integration] } }]);
+    const c = client(fetch);
+    const out = await c.testing.carrierIntegrations.list();
+    expect(out).toHaveLength(1);
+    expect(out[0].routes[0].routeId).toBe('rt_1');
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toMatch(/\/testing\/carrier-integrations$/);
+  });
+
+  it('list returns [] for a workspace with none', async () => {
+    const { fetch } = makeQueuedFetch([{ body: { integrations: [] } }]);
+    const c = client(fetch);
+    expect(await c.testing.carrierIntegrations.list()).toEqual([]);
+  });
+
+  it('get unwraps {integration}', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { integration } }]);
+    const c = client(fetch);
+    const out = await c.testing.carrierIntegrations.get('ci_1');
+    expect(out.integrationId).toBe('ci_1');
+    expect(out.status).toBe('active');
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toMatch(/\/testing\/carrier-integrations\/ci_1$/);
+  });
+});
+
+describe('TestingResource carrierIntegrations.routes', () => {
+  it('list unwraps {routes}', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { routes: [route] } }]);
+    const c = client(fetch);
+    const out = await c.testing.carrierIntegrations.routes.list('ci_1');
+    expect(out.map((r) => r.routeId)).toEqual(['rt_1']);
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toMatch(/\/testing\/carrier-integrations\/ci_1\/routes$/);
+  });
+
+  it('get unwraps {route}', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { route } }]);
+    const c = client(fetch);
+    const out = await c.testing.carrierIntegrations.routes.get('ci_1', 'rt_1');
+    expect(out.dialable).toBe(true);
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toMatch(/\/testing\/carrier-integrations\/ci_1\/routes\/rt_1$/);
+  });
+
+  it('create POSTs the body and unwraps {route}', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ status: 201, body: { route } }]);
+    const c = client(fetch);
+    const body = {
+      name: 'Vendor X',
+      techPrefix: 'R7Q2#',
+      customHeaders: [{ name: 'X-Vendor-Route', value: 'vx' }],
+    };
+    const out = await c.testing.carrierIntegrations.routes.create('ci_1', body);
+    expect(out.routeId).toBe('rt_1');
+    expect(out.techPrefix).toBe('R7Q2#');
+    expect(calls[0].init.method).toBe('POST');
+    expect(calls[0].url).toMatch(/\/testing\/carrier-integrations\/ci_1\/routes$/);
+    expect(JSON.parse(calls[0].init.body as string)).toEqual(body);
+  });
+
+  it('update PATCHes only the supplied fields and unwraps {route}', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { route: { ...route, enabled: false, dialable: false } } }]);
+    const c = client(fetch);
+    const out = await c.testing.carrierIntegrations.routes.update('ci_1', 'rt_1', { enabled: false });
+    expect(out.enabled).toBe(false);
+    expect(calls[0].init.method).toBe('PATCH');
+    expect(calls[0].url).toMatch(/\/testing\/carrier-integrations\/ci_1\/routes\/rt_1$/);
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ enabled: false });
+  });
+
+  it('encodes path segments', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { route } }]);
+    const c = client(fetch);
+    await c.testing.carrierIntegrations.routes.get('ci/1', 'rt#1');
+    expect(calls[0].url).toContain('/testing/carrier-integrations/ci%2F1/routes/rt%231');
+  });
+});
+
+describe('TestingResource carrier fields', () => {
+  it('configs.create sends carrierRouteId; update can clear it with null', async () => {
+    const cfg = { id: 'cfg_1', name: 'F', phoneNumber: '+441', steps: [], carrierRouteId: 'rt_1' };
+    const { fetch, calls } = makeQueuedFetch([{ body: cfg }, { body: { ...cfg, carrierRouteId: undefined } }]);
+    const c = client(fetch);
+    const created = await c.testing.configs.create({
+      name: 'F',
+      phoneNumber: '+441',
+      steps: [],
+      carrierRouteId: 'rt_1',
+    });
+    expect(created.carrierRouteId).toBe('rt_1');
+    expect(JSON.parse(calls[0].init.body as string).carrierRouteId).toBe('rt_1');
+    await c.testing.configs.update('cfg_1', { carrierRouteId: null });
+    expect(JSON.parse(calls[1].init.body as string)).toEqual({ carrierRouteId: null });
+  });
+
+  it('runs.get exposes carrier, hang-up cause and DTMF step fields', async () => {
+    const { fetch } = makeQueuedFetch([
+      {
+        body: {
+          id: 'run_1',
+          status: 'completed',
+          outcome: 'PASS',
+          carrier: { integrationId: 'ci_1', routeId: 'rt_1' },
+          callTelemetry: {
+            schemaVersion: 1,
+            telephony: { hangupCause: 'normal_clearing', hangupSource: 'callee', sipHangupCause: '200' },
+          },
+          stepResults: [
+            {
+              id: 's1',
+              runId: 'run_1',
+              stepIndex: 0,
+              stepId: 'st1',
+              stepName: 'Press 1',
+              outcome: 'PASS',
+              expectedTranscript: 'Thank you',
+              actualTranscript: 'Thank you',
+              similarity: 98,
+              threshold: 80,
+              actionType: 'dtmf',
+              actionValue: '1',
+              createdAt: '',
+            },
+          ],
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const run = await c.testing.runs.get('run_1');
+    expect(run.carrier).toEqual({ integrationId: 'ci_1', routeId: 'rt_1' });
+    expect(run.callTelemetry?.telephony?.sipHangupCause).toBe('200');
+    const step = run.stepResults?.[0];
+    expect(step?.actionType).toBe('dtmf');
+    expect(step?.actionValue).toBe('1');
+    expect(step?.similarity).toBe(98);
+  });
+});
