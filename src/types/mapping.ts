@@ -67,6 +67,20 @@ export interface MappingJobConfig {
   maxCalls?: number;
   maxDurationMinutes?: number;
   maxConcurrency?: number;
+  /**
+   * Transcription language for the mapping calls. Region-qualified codes such
+   * as `en-GB`; omit it to take the api's default (`en-GB`).
+   *
+   * This is a transcription language, NOT the mission-test call language
+   * (`CallLanguage`). The two sets differ and the overlap is a trap: bare
+   * `'en'` is a valid *call* language but is rejected with a 400 here, which
+   * wants `'en-GB'`.
+   *
+   * Still typed as `string` because the api's OpenAPI document types it as a
+   * bare string — it publishes no enum of the accepted transcription codes, so
+   * there is no authoritative list to narrow this to yet. Narrow it to a
+   * `TranscriptionLanguage` union once that enum is published.
+   */
   language?: string;
   voiceProfileId?: string;
   dataProfileId?: string;

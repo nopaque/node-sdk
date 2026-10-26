@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Mission test call language. `missionTests.create()` takes `language`, and
+  `MissionTestRun` returns it, typed as the new exported `CallLanguage` union
+  (`en`, `multi`, `es`, `fr`, `de`, `it`, `pt`, `nl`, `hi`, `ru`, `ja`). An SDK
+  caller previously had no way to set a language at all and was locked to the
+  default of English. Omitting it still sends no `language` key, so the API
+  applies its own default.
+
+### Changed
+
+- `MappingJobConfig.language` is documented as the *transcription* language
+  (region-qualified, `en-GB`), explicitly distinct from `CallLanguage`: bare
+  `en` is a valid call language and is rejected with a 400 as a transcription
+  language. The type is unchanged (`string`) because the API's OpenAPI document
+  publishes no enum of the accepted transcription codes.
+
 ## [0.12.0] - 2026-10-25
 
 ### Added

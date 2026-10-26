@@ -80,6 +80,35 @@ for (const turn of result.turns) console.log(`${turn.from}: ${turn.text}`);
 `start()` throws `ConflictError` when the workspace has no free survey number
 for that sender. `surveys.list()` shows how many are free.
 
+### Mission tests in another language
+
+A mission test call is held in English unless you say otherwise. Pass
+`language` on create to hold it in another language, or `multi` when the IVR
+may start in English and switch mid-call.
+
+```ts
+import type { CallLanguage } from '@nopaque/sdk';
+
+const run = await client.missionTests.create({
+  sector: 'insurance',
+  mission: 'Get a quote for a new policy',
+  acceptance: 'The agent states a premium',
+  profile: { phoneNumber: '+34911234567' },
+  language: 'es', // omit for English
+});
+
+console.log(run.language); // 'es'
+```
+
+Accepted codes (`CallLanguage`): `en`, `multi`, `es`, `fr`, `de`, `it`, `pt`,
+`nl`, `hi`, `ru`, `ja`. Omitting the field sends no `language` key at all, so
+the API applies its own default; a run with no `language` on it was English.
+
+**These are not the transcription language codes.** Standard tests and mapping
+transcribe in a region-qualified code such as `en-GB` (`MappingJobConfig.language`),
+and the two sets are not interchangeable: bare `en` is a valid *call* language
+but is rejected with a 400 as a transcription language.
+
 ### Bring your own carrier
 
 Invite-only. With bring your own carrier (BYOC), a test config's calls go out over your workspace's own SIP
