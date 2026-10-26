@@ -1,3 +1,4 @@
+export * from './language.js';
 export * from './audio.js';
 export * from './telemetry.js';
 export * from './mapping.js';

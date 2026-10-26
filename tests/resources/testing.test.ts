@@ -397,6 +397,63 @@ describe('TestingResource config fields', () => {
   });
 });
 
+describe('TestingResource transcription language', () => {
+  // Customer report: "we cannot select a language over the API". `language` was
+  // absent from CreateTestConfigRequest, so a caller was locked to the default.
+  it('configs.create sends the transcription language and round-trips it', async () => {
+    const body = {
+      name: 'Billing menu',
+      phoneNumber: '+34911234567',
+      steps: [],
+      language: 'es' as const,
+    };
+    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'cfg_1', ...body } }]);
+    const created = await client(fetch).testing.configs.create(body);
+    expect(created.language).toBe('es');
+    expect(JSON.parse(calls[0].init.body as string)).toEqual(body);
+  });
+
+  // A region-qualified code is the normal shape; `en-GB` is the api's default.
+  it('configs.create accepts a region-qualified code', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'cfg_2', name: 'A', phoneNumber: '+441', steps: [], language: 'en-GB' } },
+    ]);
+    const created = await client(fetch).testing.configs.create({
+      name: 'A',
+      phoneNumber: '+441',
+      steps: [],
+      language: 'en-GB',
+    });
+    expect(created.language).toBe('en-GB');
+    expect(JSON.parse(calls[0].init.body as string).language).toBe('en-GB');
+  });
+
+  // "Only what you pass is sent": no language key at all, so the api applies
+  // its own default of en-GB rather than the SDK guessing one.
+  it('configs.create omits language entirely when the caller does not pass one', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'cfg_3', name: 'A', phoneNumber: '+441', steps: [] } }]);
+    const created = await client(fetch).testing.configs.create({ name: 'A', phoneNumber: '+441', steps: [] });
+    expect(created.language).toBeUndefined();
+    const sent = JSON.parse(calls[0].init.body as string) as Record<string, unknown>;
+    expect('language' in sent).toBe(false);
+  });
+
+  // Update-omission semantics: omitting `language` leaves the SAVED value
+  // alone. There is no implicit reset to en-GB, so the SDK must not send the
+  // key just because the caller changed something else.
+  it('configs.update sends language only when given, leaving the saved value untouched otherwise', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { id: 'cfg_1' } }, { body: { id: 'cfg_1' } }]);
+    const c = client(fetch);
+
+    await c.testing.configs.update('cfg_1', { language: 'fr' });
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ language: 'fr' });
+
+    await c.testing.configs.update('cfg_1', { description: 'New' });
+    const second = JSON.parse(calls[1].init.body as string) as Record<string, unknown>;
+    expect('language' in second).toBe(false);
+  });
+});
+
 describe('TestingResource carrier fields', () => {
   it('configs.create sends carrierRouteId; update can clear it with null', async () => {
     const cfg = { id: 'cfg_1', name: 'F', phoneNumber: '+441', steps: [], carrierRouteId: 'rt_1' };

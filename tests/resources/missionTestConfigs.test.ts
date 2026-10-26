@@ -54,6 +54,72 @@ describe('MissionTestConfigsResource', () => {
     expect(JSON.parse(calls[0].init.body as string).tags).toEqual(['finance-uk']);
   });
 
+  // Gap found alongside the mission-test create path: the saved-config
+  // endpoints take a call language too, and it was missing from the SDK.
+  it('create sends the call language and round-trips it', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { ...cfgFixture, language: 'es' } }]);
+    const c = client(fetch);
+    const cfg = await c.missionTestConfigs.create({
+      name: 'qa',
+      sector: 'insurance',
+      mission: 'm',
+      acceptance: 'a',
+      profileId: 'p_1',
+      language: 'es',
+    });
+    expect(cfg.language).toBe('es');
+    expect(JSON.parse(calls[0].init.body as string).language).toBe('es');
+  });
+
+  it('create omits language entirely when the caller does not pass one', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: cfgFixture }]);
+    const c = client(fetch);
+    const cfg = await c.missionTestConfigs.create({
+      name: 'qa',
+      sector: 'insurance',
+      mission: 'm',
+      acceptance: 'a',
+      profileId: 'p_1',
+    });
+    expect(cfg.language).toBeUndefined();
+    const sent = JSON.parse(calls[0].init.body as string) as Record<string, unknown>;
+    expect('language' in sent).toBe(false);
+  });
+
+  // `null` is the clear sentinel (DDB REMOVE, same as description/tags) and
+  // reverts the config to English; omitting the key leaves it unchanged.
+  it('update clears the language with null and leaves it alone when omitted', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: cfgFixture }, { body: cfgFixture }]);
+    const c = client(fetch);
+
+    await c.missionTestConfigs.update('cfg_1', { language: null });
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ language: null });
+
+    await c.missionTestConfigs.update('cfg_1', { name: 'qa2' });
+    const second = JSON.parse(calls[1].init.body as string) as Record<string, unknown>;
+    expect('language' in second).toBe(false);
+  });
+
+  it('update sets a new language', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { ...cfgFixture, language: 'multi' } }]);
+    const c = client(fetch);
+    const cfg = await c.missionTestConfigs.update('cfg_1', { language: 'multi' });
+    expect(cfg.language).toBe('multi');
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({ language: 'multi' });
+  });
+
+  it('list exposes the language on the slim item', async () => {
+    const slim = {
+      id: 'cfg_1', workspaceId: 'w', name: 'qa', sector: 'insurance',
+      profileId: 'p_1', language: 'fr', createdAt: '', updatedAt: '',
+    };
+    const { fetch } = makeQueuedFetch([{ body: { configs: [slim] } }]);
+    const c = client(fetch);
+    const out = [];
+    for await (const x of c.missionTestConfigs.list()) out.push(x);
+    expect(out[0].language).toBe('fr');
+  });
+
   it('list returns slim items, sends filters and follows nextCursor', async () => {
     const slim = { id: 'cfg_1', workspaceId: 'w', name: 'qa', sector: 'insurance', profileId: 'p_1', createdAt: '', updatedAt: '' };
     const { fetch, calls } = makeQueuedFetch([
