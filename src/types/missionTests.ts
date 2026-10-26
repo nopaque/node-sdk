@@ -1,3 +1,5 @@
+import type { CallLanguage } from './language.js';
+
 export type MissionTestKind = 'freeform' | 'compliance';
 // 'pending' is what the api sends; 'queued' is kept for compatibility.
 export type MissionTestStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -12,6 +14,15 @@ export interface CreateMissionTestRequest {
   mission: string;
   acceptance: string;
   profile: MissionTestProfile;
+  /**
+   * Optional language the call is held in. Omit for English, which is how every
+   * mission test behaved before this field existed — the SDK sends the key only
+   * when you pass it, so omitting it leaves the default to the api. Use `multi`
+   * when the IVR may start in English and switch.
+   *
+   * This is a call language, not a transcription language: see `CallLanguage`.
+   */
+  language?: CallLanguage;
 }
 
 /**
@@ -39,6 +50,11 @@ export interface MissionTestRun {
   passed?: boolean;
   passReasoning?: string;
   passEvidence?: string;
+  /**
+   * The call language the run was dispatched with. Absent means English —
+   * every run from before the field existed, and every run that did not set it.
+   */
+  language?: CallLanguage;
   verdict?: 'pass' | 'fail';
   errorMessage?: string;
   createdAt?: string;

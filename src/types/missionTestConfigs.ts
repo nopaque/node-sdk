@@ -1,3 +1,5 @@
+import type { CallLanguage } from './language.js';
+
 export interface CreateMissionTestConfigRequest {
   name: string;
   description?: string;
@@ -8,6 +10,14 @@ export interface CreateMissionTestConfigRequest {
   phoneNumber?: string;
   /** User-defined labels (max 10, lowercase kebab-case). */
   tags?: string[];
+  /**
+   * Optional language the call is held in. Omit for English, which is how every
+   * mission test behaved before this field existed. Use `'multi'` when the IVR
+   * may start in English and switch.
+   *
+   * A call language, not a transcription language: see `CallLanguage`.
+   */
+  language?: CallLanguage;
 }
 
 /**
@@ -23,6 +33,12 @@ export interface UpdateMissionTestConfigRequest {
   acceptance?: string;
   profileId?: string;
   tags?: string[] | null;
+  /**
+   * The call language. Pass `null` to clear it (the same DDB REMOVE sentinel as
+   * `description` and `tags`), which reverts the config to English. Omit the
+   * key to leave the current value unchanged.
+   */
+  language?: CallLanguage | null;
 }
 
 export interface MissionTestConfig {
@@ -37,6 +53,8 @@ export interface MissionTestConfig {
   profileId: string;
   /** User-defined labels (max 10, lowercase kebab-case). */
   tags?: string[];
+  /** The call language. Absent means English. */
+  language?: CallLanguage;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +72,8 @@ export interface MissionTestConfigListItem {
   sector: string;
   profileId: string;
   tags?: string[];
+  /** The call language. Absent means English. */
+  language?: CallLanguage;
   createdAt: string;
   updatedAt: string;
 }

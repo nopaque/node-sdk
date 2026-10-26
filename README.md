@@ -80,6 +80,77 @@ for (const turn of result.turns) console.log(`${turn.from}: ${turn.text}`);
 `start()` throws `ConflictError` when the workspace has no free survey number
 for that sender. `surveys.list()` shows how many are free.
 
+### Languages
+
+There are **two different language sets**, and they are not interchangeable.
+
+| | Used by | Shape | Default |
+| --- | --- | --- | --- |
+| `TranscriptionLanguage` | `testing.configs`, `mapping` | region-qualified (`en-GB`) | `en-GB` |
+| `CallLanguage` | `missionTests`, `missionTestConfigs` | mostly bare (`en`) | English |
+
+The trap: **bare `en` is a valid call language and is rejected with a 400 as a
+transcription language**, which wants `en-GB`. Both unions are exported, so the
+compiler catches a code used on the wrong field.
+
+#### Transcription language (standard tests and mapping)
+
+```ts
+import type { TranscriptionLanguage } from '@nopaque/sdk';
+
+const config = await client.testing.configs.create({
+  name: 'Menú principal',
+  phoneNumber: '+34911234567',
+  steps: [],
+  language: 'es', // omit for en-GB
+});
+
+// Updating other fields never resets the language: omitting the key leaves
+// the saved value alone, with no implicit reversion to en-GB.
+await client.testing.configs.update(config.id, { description: 'Updated' });
+
+// Mapping takes it on the job config.
+await client.mapping.create({
+  name: 'Flemish IVR',
+  phoneNumber: '+32477123456',
+  config: { mappingMode: 'dtmf', language: 'nl-BE' },
+});
+```
+
+57 codes: `en-GB`, `en-US`, `en-AU`, `en-IN`, `en-NZ`, `multi`, `ar`, `be`,
+`bn`, `bs`, `bg`, `ca`, `zh-HK`, `zh`, `hr`, `cs`, `da`, `nl`, `et`, `fi`,
+`nl-BE`, `fr`, `de`, `el`, `gu`, `he`, `hi`, `hu`, `id`, `it`, `ja`, `kn`,
+`ko`, `lv`, `lt`, `mk`, `ms`, `mr`, `no`, `fa`, `pl`, `pt`, `ro`, `ru`, `sr`,
+`sk`, `sl`, `es`, `sv`, `tl`, `ta`, `te`, `th`, `tr`, `uk`, `ur`, `vi`.
+There is deliberately **no bare `en`**. `nl-BE` is Flemish, `zh-HK` is
+Cantonese, and `multi` code-switches.
+
+#### Call language (mission tests)
+
+A mission test call is held in English unless you say otherwise. Use `multi`
+when the IVR may start in English and switch mid-call.
+
+```ts
+import type { CallLanguage } from '@nopaque/sdk';
+
+const run = await client.missionTests.create({
+  sector: 'insurance',
+  mission: 'Get a quote for a new policy',
+  acceptance: 'The agent states a premium',
+  profile: { phoneNumber: '+34911234567' },
+  language: 'es', // omit for English
+});
+console.log(run.language); // 'es'
+
+// Saved mission test configs take it too; `null` clears it back to English.
+await client.missionTestConfigs.update('cfg_1', { language: null });
+```
+
+11 codes: `en`, `multi`, `es`, `fr`, `de`, `it`, `pt`, `nl`, `hi`, `ru`, `ja`.
+
+In both cases, omitting the field sends no `language` key at all, so the API
+applies its own default rather than the SDK guessing one.
+
 ### Bring your own carrier
 
 Invite-only. With bring your own carrier (BYOC), a test config's calls go out over your workspace's own SIP

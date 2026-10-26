@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Language selection, both sets.** An SDK caller could not set a language at
+  all — the field was absent from the SDK surface — so every test was locked to
+  the default English. Two exported string-literal unions now cover it, and the
+  compiler catches a code used on the wrong field:
+  - `TranscriptionLanguage` (57 codes, defaults to `en-GB`) on
+    `testing.configs.create()`, `testing.configs.update()` and the `TestConfig`
+    response. Omitting it on update leaves the saved value untouched — there is
+    no implicit reset to `en-GB`.
+  - `CallLanguage` (11 codes, absent means English) on `missionTests.create()`
+    and the `MissionTestRun` response, and on the saved-config path:
+    `missionTestConfigs.create()`, `update()` (where `null` clears it back to
+    English), `MissionTestConfig` and `MissionTestConfigListItem`.
+  - The two sets are different and the overlap is a trap: bare `en` is a valid
+    `CallLanguage` and is rejected with a 400 as a transcription language,
+    which wants `en-GB`. Both unions are declared side by side in
+    `src/types/language.ts` with cross-referencing doc comments.
+  - Omitting the field sends no `language` key at all, so the API applies its
+    own default rather than the SDK guessing one.
+
+### Changed
+
+- `MappingJobConfig.language` is narrowed from `string` to
+  `TranscriptionLanguage`. Technically a breaking narrowing for anyone passing
+  an arbitrary string, but any value outside the union was already rejected by
+  the API with a 400.
+
 ## [0.12.0] - 2026-10-25
 
 ### Added

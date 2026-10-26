@@ -1,3 +1,4 @@
+import type { TranscriptionLanguage } from './language.js';
 import type { CallTelemetry, TurnTelemetry } from './telemetry.js';
 
 export type JobStatus =
@@ -67,7 +68,16 @@ export interface MappingJobConfig {
   maxCalls?: number;
   maxDurationMinutes?: number;
   maxConcurrency?: number;
-  language?: string;
+  /**
+   * Transcription language for the mapping calls. Region-qualified codes such
+   * as `en-GB`, which is the API's default when this is omitted.
+   *
+   * This is a transcription language, NOT the mission-test call language
+   * (`CallLanguage`). The two sets differ and the overlap is a trap: bare
+   * `'en'` is a valid *call* language but is rejected with a 400 here, which
+   * wants `'en-GB'`.
+   */
+  language?: TranscriptionLanguage;
   voiceProfileId?: string;
   dataProfileId?: string;
   retryConfig?: RetryConfig;

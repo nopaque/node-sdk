@@ -41,6 +41,91 @@ describe('MissionTestsResource', () => {
     });
   });
 
+  // Customer report: "we cannot select a language over the API". `language`
+  // was absent from the SDK surface, so a caller was locked to English.
+  it('create sends the call language when passed and round-trips it', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        body: {
+          id: 'mt_2',
+          workspaceId: 'w',
+          kind: 'freeform',
+          sector: 'insurance',
+          mission: 'Comprar una poliza',
+          acceptance: 'Bot offers a quote',
+          profile: { phoneNumber: '+341234' },
+          status: 'queued',
+          language: 'es',
+          createdAt: '',
+          updatedAt: '',
+        },
+      },
+    ]);
+    const c = client(fetch);
+    const run = await c.missionTests.create({
+      sector: 'insurance',
+      mission: 'Comprar una poliza',
+      acceptance: 'Bot offers a quote',
+      profile: { phoneNumber: '+341234' },
+      language: 'es',
+    });
+    expect(run.language).toBe('es');
+    expect(JSON.parse(calls[0].init.body as string)).toEqual({
+      sector: 'insurance',
+      mission: 'Comprar una poliza',
+      acceptance: 'Bot offers a quote',
+      profile: { phoneNumber: '+341234' },
+      language: 'es',
+    });
+  });
+
+  // `multi` is the Flux-multi code-switching option, not an ISO code.
+  it('create accepts multi as a call language', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'mt_3', workspaceId: 'w', status: 'queued', language: 'multi' } },
+    ]);
+    const c = client(fetch);
+    const run = await c.missionTests.create({
+      sector: 'insurance',
+      mission: 'm',
+      acceptance: 'a',
+      profile: { phoneNumber: '+441234' },
+      language: 'multi',
+    });
+    expect(run.language).toBe('multi');
+    expect(JSON.parse(calls[0].init.body as string).language).toBe('multi');
+  });
+
+  // "Only what you pass is sent": no language key at all when the caller omits
+  // it, so the api applies its own default (English) rather than the SDK's.
+  it('create omits language entirely when the caller does not pass one', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'mt_4', workspaceId: 'w', status: 'queued' } },
+    ]);
+    const c = client(fetch);
+    const run = await c.missionTests.create({
+      sector: 'insurance',
+      mission: 'm',
+      acceptance: 'a',
+      profile: { phoneNumber: '+441234' },
+    });
+    expect(run.language).toBeUndefined();
+    const sent = JSON.parse(calls[0].init.body as string) as Record<string, unknown>;
+    expect('language' in sent).toBe(false);
+  });
+
+  // A run dispatched before the field existed carries no language; absent
+  // means English, and must not be coerced into a value.
+  it('list returns a run with no language as undefined', async () => {
+    const { fetch } = makeQueuedFetch([
+      { body: { runs: [{ id: 'mt_5', workspaceId: 'w', status: 'completed' }] } },
+    ]);
+    const c = client(fetch);
+    const runs = [];
+    for await (const r of c.missionTests.list()) runs.push(r);
+    expect(runs[0].language).toBeUndefined();
+  });
+
   it('list returns a paginator', async () => {
     // The api's real envelope is `{runs, nextCursor}`, and it pages on `cursor`.
     const { fetch, calls } = makeQueuedFetch([

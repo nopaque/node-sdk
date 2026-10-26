@@ -25,6 +25,35 @@ describe('MappingResource', () => {
     });
   });
 
+  // `config.language` is the TRANSCRIPTION language (region-qualified), not
+  // the mission-test call language. Typed as TranscriptionLanguage, which has
+  // deliberately no bare `en`.
+  it('create forwards the transcription language in config', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'map_3', name: 'NL', phoneNumber: '+32', status: 'idle' } },
+    ]);
+    const c = client(fetch);
+    await c.mapping.create({
+      name: 'NL',
+      phoneNumber: '+32',
+      config: { mappingMode: 'dtmf', language: 'nl-BE' },
+    });
+    expect(JSON.parse(calls[0].init.body as string).config).toEqual({
+      mappingMode: 'dtmf',
+      language: 'nl-BE',
+    });
+  });
+
+  it('create omits config.language when it is not passed', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'map_4', name: 'D', phoneNumber: '+441', status: 'idle' } },
+    ]);
+    const c = client(fetch);
+    await c.mapping.create({ name: 'D', phoneNumber: '+441', config: { mappingMode: 'dtmf' } });
+    const cfg = (JSON.parse(calls[0].init.body as string) as { config: Record<string, unknown> }).config;
+    expect('language' in cfg).toBe(false);
+  });
+
   it('create sends the full config surface for a non-dtmf job', async () => {
     // vertical is required by the API whenever mappingMode !== 'dtmf'; before
     // these fields existed on MappingJobConfig, audio modes were uncreatable.

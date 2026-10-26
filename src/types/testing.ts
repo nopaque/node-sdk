@@ -1,3 +1,4 @@
+import type { TranscriptionLanguage } from './language.js';
 import type { CallTelemetry } from './telemetry.js';
 
 export interface TestStep {
@@ -43,6 +44,11 @@ export interface TestConfig {
   scheduleId?: string;
   /** Whole-call ceiling in seconds (30–1800). The tester's default of 300 applies when unset. */
   maxDurationSecs?: number;
+  /**
+   * Transcription language for this config's calls. Absent means the API's
+   * default, `en-GB`.
+   */
+  language?: TranscriptionLanguage;
   workspaceId?: string;
   version?: number;
   createdBy?: string;
@@ -79,6 +85,15 @@ export interface CreateTestConfigRequest {
    * its default of 300. Every `hold` step's `durationSecs` must fit inside it.
    */
   maxDurationSecs?: number;
+  /**
+   * Transcription language for this config's calls. Omit it to take the API's
+   * default of `en-GB` — the SDK sends the key only when you pass it, so the
+   * default stays the API's to apply.
+   *
+   * A transcription language, not the mission-test call language: bare `'en'`
+   * is rejected with a 400 here. See `TranscriptionLanguage`.
+   */
+  language?: TranscriptionLanguage;
 }
 
 export interface UpdateTestConfigRequest {
@@ -105,6 +120,15 @@ export interface UpdateTestConfigRequest {
   scheduleId?: string | null;
   /** Seconds (30–1800), `null` to go back to the default of 300, or omit to leave it unchanged. */
   maxDurationSecs?: number | null;
+  /**
+   * Transcription language for this config's calls. **Omit the key to leave the
+   * saved value untouched** — updating other fields never resets the language,
+   * and there is no implicit reversion to `en-GB`. Pass a code to change it.
+   *
+   * A transcription language, not the mission-test call language: bare `'en'`
+   * is rejected with a 400 here. See `TranscriptionLanguage`.
+   */
+  language?: TranscriptionLanguage;
 }
 
 export interface TestingListParams {
