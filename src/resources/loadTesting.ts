@@ -215,7 +215,7 @@ export class LoadTestingResource extends Resource {
   /** GET /testing/reports/{reportId}. */
   async getReport(reportId: string, requestOptions?: RequestOptions): Promise<Report> {
     const raw = await this.transport.request<{ report: Report }>(
-      'GET', `/testing/reports/${reportId}`, { requestOptions }
+      'GET', `/testing/reports/${encodeURIComponent(reportId)}`, { requestOptions }
     );
     return raw.report;
   }
@@ -225,7 +225,7 @@ export class LoadTestingResource extends Resource {
    * (`ready` or `failed`) and its files. The runs it covered are not touched.
    */
   async deleteReport(reportId: string, requestOptions?: RequestOptions): Promise<void> {
-    await this.transport.request('DELETE', `/testing/reports/${reportId}`, { requestOptions });
+    await this.transport.request('DELETE', `/testing/reports/${encodeURIComponent(reportId)}`, { requestOptions });
   }
 
   /**
@@ -237,7 +237,7 @@ export class LoadTestingResource extends Resource {
     pack: ReportPack,
     requestOptions?: RequestOptions
   ): Promise<ReportFileDownload> {
-    return await this.transport.request('GET', `/testing/reports/${reportId}/files/${pack}`, {
+    return await this.transport.request('GET', `/testing/reports/${encodeURIComponent(reportId)}/files/${encodeURIComponent(pack)}`, {
       requestOptions,
     });
   }
@@ -253,7 +253,7 @@ export class LoadTestingResource extends Resource {
    */
   async createExport(runId: string, requestOptions?: RequestOptions): Promise<LoadTestExport> {
     const raw = await this.transport.request<{ export: LoadTestExport }>(
-      'POST', `/testing/load-tests/${runId}/exports`, { requestOptions }
+      'POST', `/testing/load-tests/${encodeURIComponent(runId)}/exports`, { requestOptions }
     );
     return raw.export;
   }
@@ -261,7 +261,7 @@ export class LoadTestingResource extends Resource {
   /** GET /testing/load-tests/{id}/exports — the run's exports, newest first (at most 20). */
   async listExports(runId: string, requestOptions?: RequestOptions): Promise<LoadTestExport[]> {
     const raw = await this.transport.request<{ exports?: LoadTestExport[] }>(
-      'GET', `/testing/load-tests/${runId}/exports`, { requestOptions }
+      'GET', `/testing/load-tests/${encodeURIComponent(runId)}/exports`, { requestOptions }
     );
     return raw.exports ?? [];
   }
@@ -276,7 +276,7 @@ export class LoadTestingResource extends Resource {
     requestOptions?: RequestOptions
   ): Promise<LoadTestExport> {
     const raw = await this.transport.request<{ export: LoadTestExport }>(
-      'GET', `/testing/load-tests/${runId}/exports/${exportId}`, { requestOptions }
+      'GET', `/testing/load-tests/${encodeURIComponent(runId)}/exports/${encodeURIComponent(exportId)}`, { requestOptions }
     );
     return raw.export;
   }
@@ -291,7 +291,7 @@ export class LoadTestingResource extends Resource {
     params: FailurePatternScopeParams = {},
     requestOptions?: RequestOptions
   ): Promise<LoadTestFailurePatterns> {
-    return await this.transport.request('GET', `/testing/load-tests/${runId}/failure-patterns`, {
+    return await this.transport.request('GET', `/testing/load-tests/${encodeURIComponent(runId)}/failure-patterns`, {
       params,
       requestOptions,
     });
@@ -307,7 +307,7 @@ export class LoadTestingResource extends Resource {
     requestOptions?: RequestOptions
   ): Promise<ReclassifyFailurePatternsResponse> {
     return await this.transport.request(
-      'POST', `/testing/load-tests/${runId}/failure-patterns/reclassify`, { params, requestOptions }
+      'POST', `/testing/load-tests/${encodeURIComponent(runId)}/failure-patterns/reclassify`, { params, requestOptions }
     );
   }
 
@@ -321,7 +321,7 @@ export class LoadTestingResource extends Resource {
     params: FailurePatternCallListParams = {},
     requestOptions?: RequestOptions
   ): Paginator<FailurePatternCall> {
-    const path = `/testing/load-tests/${runId}/failure-patterns/${patternId}/calls`;
+    const path = `/testing/load-tests/${encodeURIComponent(runId)}/failure-patterns/${encodeURIComponent(patternId)}/calls`;
     return new Paginator<FailurePatternCall>({
       fetchPage: async (p) => {
         const raw = await this.transport.request<PatternCallsPage>('GET', path, {
@@ -343,7 +343,7 @@ export class LoadTestingResource extends Resource {
   ): Promise<Page<FailurePatternCall>> {
     const raw = await this.transport.request<PatternCallsPage>(
       'GET',
-      `/testing/load-tests/${runId}/failure-patterns/${patternId}/calls`,
+      `/testing/load-tests/${encodeURIComponent(runId)}/failure-patterns/${encodeURIComponent(patternId)}/calls`,
       { params: cursorQuery(params), requestOptions }
     );
     return new Page(raw.items ?? [], raw.cursor ?? raw.nextToken ?? null);

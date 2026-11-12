@@ -123,17 +123,20 @@ export class BatchesResource extends Resource {
    * re-run every failed test.
    *
    * **This places real phone calls and spends minutes**, exactly like the
-   * original batch. Passing tests are never re-run.
+   * original batch. Passing tests are never re-run. Never retried
+   * automatically, whatever `maxRetries` is set to.
    */
   async rerun(
     batchRunId: string,
     body?: RerunBatchRunRequest,
     requestOptions?: RequestOptions
   ): Promise<BatchRun> {
-    return await this.transport.request('POST', `/testing/batch-runs/${batchRunId}/rerun`, {
-      body,
-      requestOptions,
-    });
+    // Never retried: a retry after a dropped connection could start a second rerun.
+    return await this.transport.request(
+      'POST',
+      `/testing/batch-runs/${encodeURIComponent(batchRunId)}/rerun`,
+      { body, requestOptions: { ...requestOptions, maxRetries: 0 } }
+    );
   }
 
   async waitForRun(

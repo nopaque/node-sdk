@@ -75,13 +75,18 @@ export class AudioResource extends Resource {
    * **This spends money.** Each call is billed per character of `text`, markup
    * included, and every generation is billed, including repeats of the same
    * text. It also counts against the workspace's monthly character limit.
+   * Never retried automatically, whatever `maxRetries` is set to.
    * Not retried automatically.
    */
   async generate(
     body: GenerateAudioRequest,
     requestOptions?: RequestOptions
   ): Promise<GeneratedAudio> {
-    return await this.transport.request('POST', '/audio/generate', { body, requestOptions });
+    // Never retried: a retry after a dropped connection could bill a second clip.
+    return await this.transport.request('POST', '/audio/generate', {
+      body,
+      requestOptions: { ...requestOptions, maxRetries: 0 },
+    });
   }
 
   async upload(input: UploadInput, requestOptions?: RequestOptions): Promise<AudioFile> {

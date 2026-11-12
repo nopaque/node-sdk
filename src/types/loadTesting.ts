@@ -127,7 +127,11 @@ export interface CreateReportRequest {
 }
 
 export interface ReportListParams {
-  /** Page size, 1-100. */
+  /**
+   * Sent as the page size (1-100). With the auto-paginating `list...()` method it
+   * also caps the TOTAL number of items yielded; with `list...Page()` it only
+   * sets the size of the one page.
+   */
   limit?: number;
   /** The `nextCursor` from the previous page. */
   cursor?: string;
@@ -234,7 +238,11 @@ export interface ReclassifyFailurePatternsResponse {
 
 export interface FailurePatternCallListParams {
   scope?: FailurePatternScope;
-  /** Page size, 1-200. */
+  /**
+   * Sent as the page size (1-200). With the auto-paginating `list...()` method it
+   * also caps the TOTAL number of items yielded; with `list...Page()` it only
+   * sets the size of the one page.
+   */
   limit?: number;
   /** The `cursor` from the previous page. */
   cursor?: string;

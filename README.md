@@ -208,18 +208,26 @@ A report covers 1 to 20 finished load-test runs and builds up to three files
 Both build in the background.
 
 ```ts
-const report = await client.loadTesting.createReport({ loadTestRunIds: [runId] });
-// Poll getReport() until status is 'ready' or 'failed'.
-const ready = await client.loadTesting.getReport(report.reportId);
-const pdf = await client.loadTesting.getReportFileUrl(ready.reportId, 'pdf'); // link valid 1 hour
+let report = await client.loadTesting.createReport({ loadTestRunIds: [runId] });
+while (report.status === 'pending' || report.status === 'running') {
+  await new Promise((r) => setTimeout(r, 10_000));
+  report = await client.loadTesting.getReport(report.reportId);
+}
+if (report.status === 'ready') {
+  const pdf = await client.loadTesting.getReportFileUrl(report.reportId, 'pdf'); // link valid 1 hour
+} else {
+  console.error('report failed:', report.error);
+}
 
 const exp = await client.loadTesting.createExport(runId);
 const done = await client.loadTesting.getExport(runId, exp.exportId); // downloadUrl when ready
 
 // Why calls failed, grouped by pattern, and the calls in one pattern.
-const patterns = await client.loadTesting.getFailurePatterns(runId);
-for await (const call of client.loadTesting.listFailurePatternCalls(runId, patterns.patterns[0].id)) {
-  console.log(call.callId, call.failedStepName);
+const { patterns } = await client.loadTesting.getFailurePatterns(runId);
+if (patterns.length > 0) {
+  for await (const call of client.loadTesting.listFailurePatternCalls(runId, patterns[0].id)) {
+    console.log(call.callId, call.failedStepName);
+  }
 }
 ```
 

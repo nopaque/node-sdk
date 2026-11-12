@@ -78,7 +78,7 @@ export class MissionTestsResource extends Resource {
    * that has not been produced yet is `null`.
    */
   async getAnalyses(id: string, requestOptions?: RequestOptions): Promise<MissionTestAnalyses> {
-    return await this.transport.request('GET', `/testing/mission-tests/${id}/analyses`, {
+    return await this.transport.request('GET', `/testing/mission-tests/${encodeURIComponent(id)}/analyses`, {
       requestOptions,
     });
   }

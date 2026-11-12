@@ -80,3 +80,11 @@ describe('NumbersResource', () => {
     expect(new URL(calls[2].url).pathname).toBe('/numbers/n_1/release');
   });
 });
+
+describe('NumbersResource path encoding', () => {
+  it('keeps an id to one path segment', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { released: true } }]);
+    await client(fetch).numbers.release('n_1/../n_2');
+    expect(new URL(calls[0].url).pathname).toBe('/numbers/n_1%2F..%2Fn_2/release');
+  });
+});

@@ -376,7 +376,11 @@ export interface UpdateDigitalConnectorRequest {
 export interface DigitalConnectorListParams {
   /** Filter to one connector type. An unknown type is a 400, not an empty list. */
   type?: DigitalConnectorType;
-  /** Page size, 1-200. */
+  /**
+   * Sent as the page size (1-200). With the auto-paginating `list...()` method it
+   * also caps the TOTAL number of items yielded; with `list...Page()` it only
+   * sets the size of the one page.
+   */
   limit?: number;
   /** Opaque cursor from `nextCursor` in a previous response. */
   cursor?: string;

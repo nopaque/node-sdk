@@ -188,7 +188,7 @@ export class DigitalTestingResource extends Resource {
     connectorId: string,
     requestOptions?: RequestOptions,
   ): Promise<DigitalConnector> {
-    return await this.transport.request('GET', `/digital-testing/connectors/${connectorId}`, {
+    return await this.transport.request('GET', `/digital-testing/connectors/${encodeURIComponent(connectorId)}`, {
       requestOptions,
     });
   }
@@ -220,7 +220,7 @@ export class DigitalTestingResource extends Resource {
     body: UpdateDigitalConnectorRequest,
     requestOptions?: RequestOptions,
   ): Promise<DigitalConnector> {
-    return await this.transport.request('PATCH', `/digital-testing/connectors/${connectorId}`, {
+    return await this.transport.request('PATCH', `/digital-testing/connectors/${encodeURIComponent(connectorId)}`, {
       body,
       requestOptions,
     });
@@ -233,7 +233,7 @@ export class DigitalTestingResource extends Resource {
    * @beta Access is limited to beta workspaces during the beta period.
    */
   async deleteConnector(connectorId: string, requestOptions?: RequestOptions): Promise<void> {
-    await this.transport.request('DELETE', `/digital-testing/connectors/${connectorId}`, {
+    await this.transport.request('DELETE', `/digital-testing/connectors/${encodeURIComponent(connectorId)}`, {
       requestOptions,
     });
   }

@@ -58,7 +58,8 @@ export class NumbersResource extends Resource {
    * **This spends money.** A number carries a recurring monthly charge (and
    * usually a one-off setup fee once live), and an order cannot be undone by
    * retrying: a repeat call orders a second number and a second charge. Use
-   * `release()` to stop paying for a number.
+   * `release()` to stop paying for a number. Never retried automatically,
+   * whatever `maxRetries` is set to.
    *
    * A number served from nopaque's pool is live at once (`fromPool: true`, no
    * `orderId`). Otherwise it starts in state `ordering` and takes about a day
@@ -68,7 +69,11 @@ export class NumbersResource extends Resource {
     body: CreateNumberOrderRequest,
     requestOptions?: RequestOptions
   ): Promise<NumberOrderResponse> {
-    return await this.transport.request('POST', '/numbers/orders', { body, requestOptions });
+    // Never retried: a retry after a dropped connection could buy a second number.
+    return await this.transport.request('POST', '/numbers/orders', {
+      body,
+      requestOptions: { ...requestOptions, maxRetries: 0 },
+    });
   }
 
   /**
@@ -76,7 +81,7 @@ export class NumbersResource extends Resource {
    * regulatory requirement. Read this rather than the number's state.
    */
   async getOrder(orderId: string, requestOptions?: RequestOptions): Promise<NumberOrder> {
-    return await this.transport.request('GET', `/numbers/orders/${orderId}`, { requestOptions });
+    return await this.transport.request('GET', `/numbers/orders/${encodeURIComponent(orderId)}`, { requestOptions });
   }
 
   /**
@@ -89,7 +94,7 @@ export class NumbersResource extends Resource {
     requestOptions?: RequestOptions
   ): Promise<PhoneNumber> {
     const raw = await this.transport.request<{ number: PhoneNumber }>(
-      'PATCH', `/numbers/${numberId}`, { body, requestOptions }
+      'PATCH', `/numbers/${encodeURIComponent(numberId)}`, { body, requestOptions }
     );
     return raw.number;
   }
@@ -100,7 +105,7 @@ export class NumbersResource extends Resource {
    * you. `released: false` means the release started and finishes on its own.
    */
   async release(numberId: string, requestOptions?: RequestOptions): Promise<ReleaseNumberResponse> {
-    return await this.transport.request('POST', `/numbers/${numberId}/release`, {
+    return await this.transport.request('POST', `/numbers/${encodeURIComponent(numberId)}/release`, {
       requestOptions,
     });
   }

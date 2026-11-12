@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `testing.listLanguages()` (`GET /languages`): both language sets with labels.
 - `missionTests.getAnalyses(id)` (`GET /testing/mission-tests/{id}/analyses`):
   the latest post-call analysis of each type for a mission test run.
+- `numbers.order()`, `audio.generate()` and `batches.rerun()` are never
+  retried automatically, whatever `maxRetries` is set to: a retry after a
+  dropped connection could buy a second number, bill a second clip or start a
+  second rerun.
 
 ### Fixed
 
