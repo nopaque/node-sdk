@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "mode": "dtmf",
+  "overallScore": 72,
+  "sentiment": "neutral",
+  "comparabilityNote": "Scored on DTMF dimensions only.",
+  "dimensions": [
+    {
+      "key": "clarity",
+      "label": "Clarity",
+      "score": 80,
+      "rationale": "Options are read clearly.",
+      "weight": 0.3,
+      "appliesTo": "shared"
+    },
+    {
+      "key": "efficiency",
+      "label": "Efficiency",
+      "score": 61,
+      "rationale": "Two levels before the main intents.",
+      "weight": 0.2,
+      "appliesTo": "dtmf"
+    }
+  ],
+  "input_tokens": 5123,
+  "output_tokens": 812
+}

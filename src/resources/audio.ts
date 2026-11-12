@@ -100,6 +100,7 @@ export class AudioResource extends Resource {
         contentType: resolvedType,
         category: input.category,
         ...(input.associatedId && { associatedId: input.associatedId }),
+        ...(input.metadata && { metadata: input.metadata }),
         sizeBytes: bytes.byteLength,
       },
       requestOptions

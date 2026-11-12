@@ -1,0 +1,69 @@
+{
+  "jobId": "job_9c2e",
+  "runId": "run_41aa",
+  "totalSteps": 1,
+  "items": [
+    {
+      "id": "step_1",
+      "jobId": "job_9c2e",
+      "runId": "run_41aa",
+      "workspaceId": "ws_3f9a",
+      "parentStepId": "step_root",
+      "depth": 1,
+      "path": [
+        "1"
+      ],
+      "pathString": "1",
+      "status": "completed",
+      "retryCount": 0,
+      "stepType": "dtmf",
+      "result": {
+        "transcript": "Cards. To report a lost card press 1.",
+        "dtmfOptions": [
+          {
+            "digit": "1",
+            "label": "report a lost card"
+          }
+        ],
+        "isTerminal": true,
+        "audioUrl": "https://example-bucket.s3.eu-west-2.amazonaws.com/b.wav",
+        "duration": 6.2
+      },
+      "transcriptHash": "9f2b",
+      "createdAt": "2026-11-10T10:00:00.000Z",
+      "completedAt": "2026-11-10T10:00:09.000Z"
+    }
+  ],
+  "steps": [
+    {
+      "id": "step_1",
+      "jobId": "job_9c2e",
+      "runId": "run_41aa",
+      "workspaceId": "ws_3f9a",
+      "parentStepId": "step_root",
+      "depth": 1,
+      "path": [
+        "1"
+      ],
+      "pathString": "1",
+      "status": "completed",
+      "retryCount": 0,
+      "stepType": "dtmf",
+      "result": {
+        "transcript": "Cards. To report a lost card press 1.",
+        "dtmfOptions": [
+          {
+            "digit": "1",
+            "label": "report a lost card"
+          }
+        ],
+        "isTerminal": true,
+        "audioUrl": "https://example-bucket.s3.eu-west-2.amazonaws.com/b.wav",
+        "duration": 6.2
+      },
+      "transcriptHash": "9f2b",
+      "createdAt": "2026-11-10T10:00:00.000Z",
+      "completedAt": "2026-11-10T10:00:09.000Z"
+    }
+  ]
+}

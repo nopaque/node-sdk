@@ -11,18 +11,14 @@ describe('EnrichmentResource', () => {
   it('get fetches enrichment by type', async () => {
     const { fetch, calls } = makeQueuedFetch([
       {
-        body: {
-          jobId: 'map_1',
-          runId: 'run_1',
-          type: 'quality_scoring',
-          status: 'completed',
-          results: { overallScore: 78, sentiment: 'Good' },
-        },
+        // A completed enrichment comes back unwrapped: the result itself.
+        body: { schemaVersion: 2, mode: 'dtmf', overallScore: 78, sentiment: 'Good', dimensions: [] },
       },
     ]);
     const c = client(fetch);
     const res = await c.enrichment.get('map_1', 'run_1', 'quality_scoring');
     expect(res.status).toBe('completed');
+    expect(res.results?.overallScore).toBe(78);
     expect(calls[0].url).toContain('/mapping/map_1/runs/run_1/enrichments/quality_scoring');
   });
 

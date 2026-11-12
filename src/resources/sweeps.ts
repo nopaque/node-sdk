@@ -10,7 +10,7 @@ import type {
   UpdateSweepRequest,
 } from '../types/sweeps.js';
 
-const RUN_TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
+const RUN_TERMINAL_STATUSES = new Set(['completed', 'failed', 'partial', 'cancelled']);
 
 export interface SweepsWaitForOptions {
   timeout?: number;

@@ -73,7 +73,9 @@ describe('SweepsResource', () => {
           id: 'srun_1',
           sweepId: 'sweep_1',
           status: 'completed',
-          results: [{ variation: { dtmfOption: '1' }, result: 'pass' }],
+          summary: { total: 1, pending: 0, running: 0, passed: 1, failed: 0, error: 0 },
+          testRunIds: ['tr_1'],
+          testRuns: [{ id: 'tr_1', testConfigId: 'cfg_1', status: 'completed', outcome: 'PASS' }],
         },
       },
     ]);
@@ -82,7 +84,8 @@ describe('SweepsResource', () => {
     for await (const r of c.sweeps.listRuns()) out.push(r);
     expect(out[0].id).toBe('srun_1');
     const r = await c.sweeps.getRun('srun_1');
-    expect(r.results?.[0].result).toBe('pass');
+    expect(r.summary.passed).toBe(1);
+    expect(r.testRuns?.[0].outcome).toBe('PASS');
   });
 
   it('waitForRun returns on terminal', async () => {
@@ -93,6 +96,16 @@ describe('SweepsResource', () => {
     const c = client(fetch);
     const r = await c.sweeps.waitForRun('srun_1', { timeout: 5000, pollInterval: 1 });
     expect(r.status).toBe('completed');
+  });
+
+  it('waitForRun stops on partial (some test runs passed, some did not)', async () => {
+    const { fetch } = makeQueuedFetch([
+      { body: { id: 'srun_1', sweepId: 'sweep_1', status: 'running' } },
+      { body: { id: 'srun_1', sweepId: 'sweep_1', status: 'partial' } },
+    ]);
+    const c = client(fetch);
+    const r = await c.sweeps.waitForRun('srun_1', { timeout: 5000, pollInterval: 1 });
+    expect(r.status).toBe('partial');
   });
 
   it('waitForRun times out', async () => {

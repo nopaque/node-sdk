@@ -55,7 +55,16 @@ describe('LoadTestingResource', () => {
     const { fetch, calls } = makeQueuedFetch([
       { body: { id: 'lt_1', runId: 'ltrun_1', status: 'running' } },
       { body: { id: 'lt_1', status: 'aborted' } },
-      { body: { id: 'lt_1', status: 'running', progress: { completedCalls: 10, totalCalls: 100 } } },
+      {
+        body: {
+          id: 'lt_1',
+          status: 'running',
+          currentSecond: 30,
+          totalSeconds: 300,
+          progressPercent: 10,
+          stats: { started: 12, completed: 10, failed: 1, errors: 0 },
+        },
+      },
     ]);
     const c = client(fetch);
     const st = await c.loadTesting.start('lt_1');
@@ -63,7 +72,8 @@ describe('LoadTestingResource', () => {
     const ab = await c.loadTesting.abort('lt_1');
     expect(ab.status).toBe('aborted');
     const stat = await c.loadTesting.status('lt_1');
-    expect(stat.progress.completedCalls).toBe(10);
+    expect(stat.progressPercent).toBe(10);
+    expect(stat.stats.completed).toBe(10);
     expect(calls[0].url).toContain('/testing/load-tests/lt_1/start');
     expect(calls[1].url).toContain('/testing/load-tests/lt_1/abort');
     expect(calls[2].url).toContain('/testing/load-tests/lt_1/status');
