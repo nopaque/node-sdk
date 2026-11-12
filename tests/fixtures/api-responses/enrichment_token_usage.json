@@ -1,0 +1,22 @@
+{
+  "runId": "run_41aa",
+  "services": {
+    "ivr_analysis": {
+      "inputTokens": 12000,
+      "outputTokens": 1500,
+      "totalTokens": 13500,
+      "eventCount": 3
+    },
+    "quality_scoring": {
+      "inputTokens": 5123,
+      "outputTokens": 812,
+      "totalTokens": 5935,
+      "eventCount": 1
+    }
+  },
+  "total": {
+    "inputTokens": 17123,
+    "outputTokens": 2312,
+    "totalTokens": 19435
+  }
+}

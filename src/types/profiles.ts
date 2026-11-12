@@ -32,7 +32,8 @@ export interface Profile {
   workspaceId?: string;
   name: string;
   description?: string;
-  items?: ProfileItem[];
+  /** Always present; `[]` on a new profile. */
+  items: ProfileItem[];
   createdAt?: string;
   updatedAt?: string;
   createdBy?: string;

@@ -251,8 +251,26 @@ export interface TreeInputRequired {
 }
 
 /** Enrichment fields shared by TreeNode and FlatTreeNode (all optional/additive). */
+/** A menu option heard in a node's recording. */
+export interface TreeMenuOption {
+  digit: string;
+  label?: string;
+  spokenText?: string;
+  offerSecs?: number;
+}
+
+/** A menu heard in a node's recording, in the order heard. */
+export interface TreeMenu {
+  label?: string;
+  enteredBy?: string;
+  startSecs?: number;
+  endSecs?: number;
+  options: TreeMenuOption[];
+}
+
 export interface TreeNodeEnrichment {
-  stepType?: 'dtmf' | 'voice';
+  /** `'s2s_node'` is a voice-agent conversation turn. */
+  stepType?: 'dtmf' | 'voice' | 's2s_node';
   voicePrompt?: string;
   menuLabel?: string;
   spokenResponse?: string;
@@ -262,6 +280,12 @@ export interface TreeNodeEnrichment {
   audioUrl?: string;
   duration?: number;
   inputRequired?: TreeInputRequired;
+  fullTranscript?: string;
+  audioId?: string;
+  menus?: TreeMenu[];
+  skipReason?: string;
+  originalStepId?: string;
+  repeatReason?: 'loop_detected' | 'repeat_detected' | 'repeat_limit';
 }
 
 export interface TreeNode extends TreeNodeEnrichment {
@@ -269,8 +293,10 @@ export interface TreeNode extends TreeNodeEnrichment {
   digit?: string;
   label?: string;
   depth: number;
+  /** Digits pressed from the root to reach this node; `[]` for the root. */
   path: string[];
-  status: StepStatus;
+  /** `'unknown'` when the step row has no status. */
+  status: StepStatus | 'unknown';
   transcript?: string;
   isTerminal: boolean;
   children: TreeNode[];
@@ -281,8 +307,10 @@ export interface FlatTreeNode extends TreeNodeEnrichment {
   digit?: string;
   label?: string;
   depth: number;
+  /** Digits pressed from the root to reach this node; `[]` for the root. */
   path: string[];
-  status: StepStatus;
+  /** `'unknown'` when the step row has no status. */
+  status: StepStatus | 'unknown';
   transcript?: string;
   isTerminal: boolean;
 }

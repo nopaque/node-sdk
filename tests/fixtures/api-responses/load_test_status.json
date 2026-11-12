@@ -1,0 +1,49 @@
+{
+  "id": "ltr_8e21",
+  "name": "Peak hour",
+  "testConfigId": "cfg_12",
+  "loadTestConfigId": "ltc_7",
+  "status": "running",
+  "currentSecond": 90,
+  "totalSeconds": 300,
+  "progressPercent": 30,
+  "stats": {
+    "started": 42,
+    "completed": 30,
+    "failed": 4,
+    "errors": 1,
+    "p50": 41.2,
+    "p95": 58.9,
+    "p99": 63.0,
+    "offered": 45,
+    "dropped": 3,
+    "qualityCalls": 30,
+    "poorQualityCalls": 2,
+    "quality": {
+      "calls": 30,
+      "poorCalls": 2,
+      "estimatedMos": {
+        "p50": 4.3,
+        "p5": 3.4,
+        "min": 3.1
+      },
+      "packetLossPct": {
+        "p50": 0.1,
+        "p95": 1.2,
+        "max": 2.5
+      }
+    },
+    "patterns": {
+      "no_answer": 3,
+      "dtmf_not_recognised": 1
+    },
+    "lateStarts": 2,
+    "lateStartsPassed": 1
+  },
+  "startedAt": "2026-11-10T11:00:00.000Z",
+  "config": {
+    "id": "ltc_7",
+    "name": "Peak hour",
+    "testConfigId": "cfg_12"
+  }
+}

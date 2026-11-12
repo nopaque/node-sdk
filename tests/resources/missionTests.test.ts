@@ -194,11 +194,22 @@ describe('MissionTestsResource', () => {
 
   it('getDefaults returns defaults', async () => {
     const { fetch } = makeQueuedFetch([
-      { body: { sector: 'insurance', mission: 'm', acceptance: 'a', catalogueVersion: 'v1' } },
+      {
+        body: {
+          schemaVersion: 1,
+          sectors: [
+            {
+              id: 'insurance',
+              label: 'Insurance',
+              missions: [{ id: 'm', label: 'M', defaultAcceptance: 'a' }],
+            },
+          ],
+        },
+      },
     ]);
     const c = client(fetch);
     const d = await c.missionTests.getDefaults();
-    expect(d.catalogueVersion).toBe('v1');
+    expect(d.sectors[0].missions[0].defaultAcceptance).toBe('a');
   });
 
   it('getDefaults surfaces CATALOG_NOT_READY as a typed ServerError with code', async () => {

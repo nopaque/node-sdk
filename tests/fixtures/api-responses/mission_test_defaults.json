@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "_notes": "ASSUMED: training-knowledge-grounded IVR test scenarios. Iterate via mission-tester PRs as user feedback comes in over the first 4 weeks of usage (Finding 16 + REQUIREMENTS.md scope decision 'iterate based on observed accuracy').",
+  "sectors": [
+    {
+      "id": "banking",
+      "label": "Banking",
+      "missions": [
+        {
+          "id": "human-fraud",
+          "label": "Reach a human agent for fraud reporting",
+          "defaultAcceptance": "An agent (not a bot) explicitly offers to help with the fraud claim within 90 seconds and without requiring full account number entry first."
+        },
+        {
+          "id": "balance-check",
+          "label": "Check current account balance",
+          "defaultAcceptance": "The IVR or agent confirms a specific GBP/USD balance figure for the named account."
+        },
+        {
+          "id": "card-block",
+          "label": "Block a stolen debit card",
+          "defaultAcceptance": "The IVR or agent confirms the card has been blocked or sets up a callback for emergency replacement."
+        },
+        {
+          "id": "branch-hours",
+          "label": "Find a local branch's opening hours",
+          "defaultAcceptance": "The IVR or agent provides specific opening-hours information for at least one branch."
+        }
+      ]
+    },
+    {
+      "id": "insurance",
+      "label": "Insurance",
+      "missions": [
+        {
+          "id": "claim-status",
+          "label": "Check claim status",
+          "defaultAcceptance": "The IVR or agent provides a status update or a clear status code/timeline for an existing claim."
+        },
+        {
+          "id": "file-claim",
+          "label": "File a new claim",
+          "defaultAcceptance": "The IVR or agent collects enough claim details to advance to the adjuster step or produces a claim reference number."
+        },
+        {
+          "id": "policy-renew",
+          "label": "Discuss policy renewal",
+          "defaultAcceptance": "The IVR or agent confirms current policy details and the renewal date or initiates renewal handling."
+        }
+      ]
+    }
+  ]
+}

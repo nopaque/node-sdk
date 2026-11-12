@@ -1,0 +1,23 @@
+{
+  "id": "prof_a",
+  "workspaceId": "ws_3f9a",
+  "name": "Account holder",
+  "items": [
+    {
+      "id": "pi_1",
+      "type": "voice",
+      "label": "Greeting",
+      "audioId": "aud_9"
+    },
+    {
+      "id": "pi_2",
+      "type": "data",
+      "label": "Account number",
+      "datasetId": "ds_4",
+      "itemId": "dsi_2"
+    }
+  ],
+  "createdAt": "2026-11-01T09:00:00.000Z",
+  "updatedAt": "2026-11-02T09:00:00.000Z",
+  "createdBy": "usr_1"
+}

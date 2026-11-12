@@ -6,12 +6,12 @@ import type {
   ComplianceReport,
   ComplianceReportListItem,
   ComplianceReportListParams,
+  ComplianceRerunResponse,
   CreateComplianceBatchRequest,
   CreateComplianceBatchResponse,
   GeneratePdfRequest,
   GeneratePdfResponse,
 } from '../types/compliance.js';
-import type { MissionTestRun } from '../types/missionTests.js';
 
 // Path interpolation in Transport is direct (no automatic encoding), so the
 // E.164 leading `+` must be encoded at the resource boundary or it will reach
@@ -126,7 +126,8 @@ export class ComplianceResource extends Resource {
     return new Uint8Array(await response.arrayBuffer());
   }
 
-  async rerun(runId: string, requestOptions?: RequestOptions): Promise<MissionTestRun> {
+  /** Run a compliance test again with the same settings. Returns the new run's id. */
+  async rerun(runId: string, requestOptions?: RequestOptions): Promise<ComplianceRerunResponse> {
     return await this.transport.request('POST', `/testing/compliance-runs/${runId}/rerun`, { requestOptions });
   }
 }

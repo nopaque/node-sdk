@@ -1,0 +1,84 @@
+{
+  "jobId": "job_9c2e",
+  "runId": "run_41aa",
+  "runNumber": 3,
+  "status": "completed",
+  "stats": {
+    "totalCalls": 3,
+    "completedCalls": 3,
+    "failedCalls": 0,
+    "loopsDetected": 0,
+    "retriedCalls": 0
+  },
+  "tree": {
+    "stepId": "step_root",
+    "depth": 0,
+    "path": [],
+    "status": "completed",
+    "transcript": "Welcome to Acme Bank. Press 1 for cards, press 2 for loans.",
+    "isTerminal": false,
+    "duration": 8.4,
+    "audioUrl": "https://example-bucket.s3.eu-west-2.amazonaws.com/a.wav",
+    "fullTranscript": "Welcome to Acme Bank. Press 1 for cards, press 2 for loans.",
+    "audioId": "aud_root",
+    "menus": [
+      {
+        "label": "Main menu",
+        "startSecs": 0.4,
+        "endSecs": 7.9,
+        "options": [
+          {
+            "digit": "1",
+            "label": "cards",
+            "offerSecs": 3.1
+          },
+          {
+            "digit": "2",
+            "label": "loans",
+            "offerSecs": 5.6
+          }
+        ]
+      }
+    ],
+    "children": [
+      {
+        "stepId": "step_1",
+        "digit": "1",
+        "label": "cards",
+        "depth": 1,
+        "path": [
+          "1"
+        ],
+        "status": "completed",
+        "transcript": "Cards. To report a lost card press 1.",
+        "isTerminal": true,
+        "children": [],
+        "stepType": "dtmf",
+        "inputRequired": {
+          "type": "account_number",
+          "description": "Your 8 digit account number",
+          "terminator": "#",
+          "startTimeMs": 4200
+        }
+      },
+      {
+        "stepId": "step_2",
+        "digit": "2",
+        "label": "loans",
+        "depth": 1,
+        "path": [
+          "2"
+        ],
+        "status": "completed",
+        "transcript": "How can I help with your loan?",
+        "isTerminal": true,
+        "children": [],
+        "stepType": "s2s_node",
+        "menuLabel": "loan_enquiry",
+        "spokenResponse": "I'd like to check my balance",
+        "repeatReason": "repeat_detected",
+        "originalStepId": "step_1"
+      }
+    ]
+  }
+}

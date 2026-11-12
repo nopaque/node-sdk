@@ -1,4 +1,5 @@
 export type LoadTestStatus =
+  | 'pending'
   | 'created'
   | 'queued'
   | 'running'
@@ -52,16 +53,76 @@ export interface LoadTestEstimate {
   totalCalls: number;
 }
 
+/** @deprecated Never sent by the API. See `LoadTestStatusResponse`. */
 export interface LoadTestProgress {
   completedCalls: number;
   totalCalls: number;
   passRate?: number;
 }
 
+/**
+ * Call quality across a run. `estimatedMos` carries p50, p5 and min; the others
+ * p50, p95 and max.
+ */
+export interface LoadTestQualitySummary {
+  calls: number;
+  poorCalls: number;
+  estimatedMos?: { p50: number; p5: number; min: number };
+  packetLossPct?: { p50: number; p95: number; max: number };
+  jitterMs?: { p50: number; p95: number; max: number };
+  answerSecs?: { p50: number; p95: number; max: number };
+}
+
+/** Running totals for a load-test run. Percentiles are call durations in seconds. */
+export interface LoadTestRunStats {
+  started: number;
+  completed: number;
+  failed: number;
+  errors: number;
+  p50?: number;
+  p95?: number;
+  p99?: number;
+  offered?: number;
+  dropped?: number;
+  callerIdPool?: number;
+  callerIdWorkspaceDefault?: number;
+  callerIdPlatformDefault?: number;
+  qualityCalls?: number;
+  poorQualityCalls?: number;
+  quality?: LoadTestQualitySummary;
+  /** Failed calls per failure-pattern id. */
+  patterns?: Record<string, number>;
+  lateStarts?: number;
+  lateStartsPassed?: number;
+}
+
+/**
+ * Response from GET /testing/load-tests/{id}/status. Progress is
+ * `currentSecond` of `totalSeconds` (`progressPercent` rounds it); `stats`
+ * holds the call counts so far.
+ */
 export interface LoadTestStatusResponse {
   id: string;
+  name?: string;
+  testConfigId?: string;
+  loadTestConfigId?: string;
+  groupId?: string;
+  laneIndex?: number;
+  groupSize?: number;
   status: LoadTestStatus;
-  progress: LoadTestProgress;
+  currentSecond: number;
+  totalSeconds: number;
+  progressPercent: number;
+  stats: LoadTestRunStats;
+  startedAt?: string;
+  completedAt?: string;
+  abortedAt?: string;
+  abortReason?: 'entitlement_exhausted' | 'user_aborted' | 'timeout' | 'error';
+  errorMessage?: string;
+  /** The load-test config as this run sees it (a grouped run's own lane). */
+  config?: Record<string, unknown>;
+  /** @deprecated Never sent by the API; always undefined. Use `currentSecond`, `totalSeconds` and `stats`. */
+  progress?: LoadTestProgress;
   [key: string]: unknown;
 }
 

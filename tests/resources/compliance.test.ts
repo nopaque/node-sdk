@@ -11,17 +11,18 @@ describe('ComplianceResource', () => {
     const { fetch } = makeQueuedFetch([
       {
         body: {
-          catalogue: { version: 'v1', regulations: [], tests: [] },
+          catalogue: { version: 2, regulations: {}, tests: [] },
           pickerLimit: 50,
-          s2stestSecondsAvailable: 600,
-          tier: 'pro',
+          complianceSecondsAvailable: null,
+          tier: 'team',
         },
       },
     ]);
     const c = client(fetch);
     const r = await c.compliance.getCatalogue();
-    expect(r.catalogue.version).toBe('v1');
+    expect(r.catalogue.version).toBe(2);
     expect(r.pickerLimit).toBe(50);
+    expect(r.complianceSecondsAvailable).toBeNull();
   });
 
   it('run dispatches a batch and returns run ids', async () => {
@@ -85,21 +86,19 @@ describe('ComplianceResource', () => {
     const { fetch, calls } = makeQueuedFetch([
       {
         body: {
-          summary: {
-            phoneNumber: '+441234',
-            catalogueVersion: 'v1',
-            passed: 2,
-            failed: 3,
-            pending: 0,
-            generatedAt: '',
-          },
-          sections: [],
+          workspaceId: 'w',
+          phoneNumber: '+441234',
+          catalogueVersion: 2,
+          summary: { ran: 5, passed: 2, failed: 3, total: 12 },
+          regulations: [],
+          metadata: { displayName: null, additionalContext: null, carrierRouteId: null, updatedAt: null },
         },
       },
     ]);
     const c = client(fetch);
     const r = await c.compliance.getReport('+441234');
-    expect(r.summary.phoneNumber).toBe('+441234');
+    expect(r.phoneNumber).toBe('+441234');
+    expect(r.summary.failed).toBe(3);
     expect(calls[0].url).toContain('/testing/compliance-reports/%2B441234');
   });
 
@@ -141,22 +140,12 @@ describe('ComplianceResource', () => {
   it('rerun POSTs to /rerun', async () => {
     const { fetch, calls } = makeQueuedFetch([
       {
-        body: {
-          id: 'mt_3',
-          workspaceId: 'w',
-          kind: 'compliance',
-          sector: 'i',
-          mission: 'm',
-          acceptance: 'a',
-          profile: { phoneNumber: '+44' },
-          status: 'queued',
-          createdAt: '',
-          updatedAt: '',
-        },
+        body: { runId: 'mt_3' },
       },
     ]);
     const c = client(fetch);
-    await c.compliance.rerun('mt_old');
+    const r = await c.compliance.rerun('mt_old');
+    expect(r.runId).toBe('mt_3');
     expect(calls[0].url).toContain('/testing/compliance-runs/mt_old/rerun');
     expect(calls[0].init.method).toBe('POST');
   });

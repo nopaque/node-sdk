@@ -61,11 +61,30 @@ export interface MissionTestRun {
   updatedAt?: string;
 }
 
+/** A ready-made mission: what to attempt, and when it counts as done. */
+export interface MissionDefaultsMission {
+  id: string;
+  label: string;
+  defaultAcceptance: string;
+}
+
+export interface MissionDefaultsSector {
+  id: string;
+  label: string;
+  missions: MissionDefaultsMission[];
+}
+
+/**
+ * The sector catalogue from GET /testing/mission-tests/defaults. Each sector
+ * lists ready-made missions with a default acceptance criterion, for use as
+ * `sector`, `mission` and `acceptance` on `missionTests.create()`. The API
+ * passes through the catalogue the mission-tester service publishes, so keys
+ * may be added without notice.
+ */
 export interface MissionTestDefaults {
-  sector: string;
-  mission: string;
-  acceptance: string;
-  catalogueVersion: string;
+  schemaVersion: number;
+  sectors: MissionDefaultsSector[];
+  [key: string]: unknown;
 }
 
 /** Filters for GET /testing/mission-tests. All are applied server-side. */

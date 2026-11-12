@@ -6,6 +6,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+Response types that did not match what the API sends. Each was checked
+against the api handler code, which in places disagrees with the OpenAPI
+document; tests now read a response built from the handler for every
+endpoint below (`tests/resources/responseShapes.test.ts`).
+
+- `compliance.getCatalogue()`: `catalogue.version` is a number and
+  `catalogue.regulations` is a `Record` keyed by regulation key
+  (`ComplianceRegulation` is `name`, `jurisdiction`, `url`, `full_ref`,
+  `in_force`, `in_force_phases`, `notes`, `sectors`). `ComplianceTest` has
+  `name`, `summary`, `channels`, `sectors`, `jurisdictions`, `mission`,
+  `pass`, `fail`, `covers` (new `ComplianceCoversEntry`) and `probeCount`.
+  The response has `complianceSecondsAvailable` (`null` on paid tiers),
+  which the API sends instead of `s2stestSecondsAvailable`; the latter is
+  kept as an optional, deprecated field.
+- `compliance.getReport()`: `ComplianceReport` is `workspaceId`,
+  `phoneNumber`, `catalogueVersion`, `summary` (`ran`, `passed`, `failed`,
+  `total`), `regulations` (one `ComplianceRegulationSection` per regulation,
+  each with its `summary` and `tests`, every test carrying its `lastRun` or
+  `null`) and `metadata`. New types `ComplianceReportTest`,
+  `ComplianceLastRun`, `CompliancePassEvidence`, `ComplianceFailEvidence`
+  and `ComplianceReportMetadata`.
+- `compliance.rerun()` resolves to the new `ComplianceRerunResponse`
+  (`{ runId }`), which is what the API sends, not a `MissionTestRun`.
+- `missionTests.getDefaults()`: `MissionTestDefaults` is the sector
+  catalogue, `schemaVersion` and `sectors`, each with `missions` (`id`,
+  `label`, `defaultAcceptance`). New types `MissionDefaultsSector` and
+  `MissionDefaultsMission`.
+- `mapping.tree()`: `stepType` includes `'s2s_node'` (a voice-agent turn),
+  `status` includes `'unknown'`, and tree nodes gain `fullTranscript`,
+  `audioId`, `menus` (new `TreeMenu`, `TreeMenuOption`), `skipReason`,
+  `originalStepId` and `repeatReason`.
+- `enrichment.get()`: the API returns a completed enrichment as the result
+  itself, unwrapped, so `results` was always undefined. The SDK now brings
+  both response forms to `Enrichment`: `results` holds the result, `status`
+  is `'completed'` for an unwrapped one, `jobId`, `runId` and `type` come
+  from the request, and the record form's `enrichmentId`, `enrichmentType`,
+  `data`, `error` and `completedAt` are typed. An unwrapped result's own
+  fields stay at the top level too. `QualityScoringResults.dimensions` may
+  be an array (`QualityDimensionScore[]`, v2 scores).
+- `enrichment.tokenUsage()`: the API sends `{ runId, services, total }`.
+  `TokenUsageResponse` gains `services` (`Record<string,
+  ServiceTokenUsage>`) and `total` (`TokenUsageTotals`); `jobId` and
+  `usage`, which the API does not send, are now filled in by the SDK.
+- `loadTesting.status()`: `LoadTestStatusResponse` has `currentSecond`,
+  `totalSeconds`, `progressPercent` and `stats` (new `LoadTestRunStats`,
+  `LoadTestQualitySummary`), plus `name`, the config and group ids,
+  timestamps, `abortReason`, `errorMessage` and `config`. `LoadTestStatus`
+  includes `'pending'`.
+- `sweeps.getRun()` and the run lists: `SweepRun` has `summary` (new
+  `SweepRunSummary`), `testRunIds`, `testRuns` (new `SweepRunTestRun`, on
+  `getRun()` only), `triggeredBy`, `scheduleId`, `workspaceId` and
+  `createdBy`. `SweepRunStatus` includes `'pending'` and `'partial'`.
+- `sweeps.waitForRun()` now stops on `'partial'` (every test run finished,
+  some failed). It used to poll until the timeout.
+- `Profile.items` is required: the API always sends it (`[]` on a new
+  profile).
+
+### Added
+
+- `audio.createUploadUrl()` and `audio.upload()` take `metadata`, stored on
+  the audio row (the app shows `metadata.displayName` as the file's name).
+
+### Changed
+
+These change types the API never matched, so code relying on the old
+fields was reading `undefined`; but it may no longer compile:
+
+- `ComplianceCatalogue.regulations` is a `Record`, not an array, and
+  `version` a number. `ComplianceTest` loses `title` and `regulationKeys`
+  (use `name` and `covers`); `ComplianceRegulation` loses `key`, `label`
+  and `testIds`. `ComplianceReport` loses `sections`, and
+  `ComplianceReportSummary` and `ComplianceRegulationSection` have the
+  report's real fields. `ComplianceTestVerdict` and
+  `ComplianceTestEvidence` are deprecated and unused.
+- `compliance.rerun()` resolves to `ComplianceRerunResponse`.
+- `MissionTestDefaults` loses `sector`, `mission`, `acceptance` and
+  `catalogueVersion`.
+- `LoadTestStatusResponse.progress` is optional and deprecated (never
+  sent). `SweepRun.variations`, `passRate` and `results` are deprecated
+  (never sent).
+
 ## [0.14.0] - 2026-11-12
 
 ### Added

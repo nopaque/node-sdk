@@ -43,6 +43,11 @@ export interface CreateUploadUrlRequest {
   durationSecs?: number;
   /** Exact file size in bytes. Required by the API (maximum 50 MB). */
   sizeBytes: number;
+  /**
+   * Stored on the audio row as given. The app shows `metadata.displayName` as
+   * the file's name when set.
+   */
+  metadata?: Record<string, unknown>;
 }
 
 export interface AudioListParams {
@@ -57,6 +62,8 @@ export interface UploadInput {
   contentType?: string;
   name?: string;
   associatedId?: string;
+  /** Passed to `createUploadUrl()`: stored on the audio row as given. */
+  metadata?: Record<string, unknown>;
 }
 
 export interface DownloadOptions {

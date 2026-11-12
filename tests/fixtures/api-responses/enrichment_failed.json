@@ -1,0 +1,9 @@
+{
+  "enrichmentId": "enr_5d1c",
+  "runId": "run_41aa",
+  "jobId": "job_9c2e",
+  "enrichmentType": "quality_scoring",
+  "status": "failed",
+  "error": "llm-gateway returned 503",
+  "completedAt": "2026-11-10T10:05:00.000Z"
+}
