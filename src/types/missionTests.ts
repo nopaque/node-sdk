@@ -86,3 +86,29 @@ export interface MissionTestListParams {
   /** The api's own name for the cursor; either works. */
   cursor?: string;
 }
+
+export type MissionTestAnalysisType =
+  | 'judge_mission'
+  | 'transcribe_words'
+  | 'compute_latencies'
+  | 'detect_silences';
+
+/** The latest post-call analysis of one type for a mission test run. */
+export interface MissionTestAnalysis {
+  runId: string;
+  type: MissionTestAnalysisType;
+  version: string;
+  producedAt: string;
+  status: 'pending' | 'completed' | 'failed';
+  /** The analysis output; its shape varies by `type`. */
+  data?: Record<string, unknown>;
+  error?: string;
+  model?: string;
+  [key: string]: unknown;
+}
+
+/** `GET /testing/mission-tests/{id}/analyses`: the latest row per type, or null. */
+export interface MissionTestAnalyses {
+  runId: string;
+  analyses: Partial<Record<MissionTestAnalysisType, MissionTestAnalysis | null>>;
+}

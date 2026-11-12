@@ -10,6 +10,8 @@ import type {
   AudioUploadURL,
   CreateUploadUrlRequest,
   DownloadOptions,
+  GenerateAudioRequest,
+  GeneratedAudio,
   UploadInput,
 } from '../types/audio.js';
 
@@ -63,6 +65,27 @@ export class AudioResource extends Resource {
     return await this.transport.request('GET', '/audio/download-url', {
       params: { audioId },
       requestOptions,
+    });
+  }
+
+  /**
+   * POST /audio/generate — speak `text` in an enabled voice and store the
+   * result as an MP3 voice clip in the workspace.
+   *
+   * **This spends money.** Each call is billed per character of `text`, markup
+   * included, and every generation is billed, including repeats of the same
+   * text. It also counts against the workspace's monthly character limit.
+   * Never retried automatically, whatever `maxRetries` is set to.
+   * Not retried automatically.
+   */
+  async generate(
+    body: GenerateAudioRequest,
+    requestOptions?: RequestOptions
+  ): Promise<GeneratedAudio> {
+    // Never retried: a retry after a dropped connection could bill a second clip.
+    return await this.transport.request('POST', '/audio/generate', {
+      body,
+      requestOptions: { ...requestOptions, maxRetries: 0 },
     });
   }
 

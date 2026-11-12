@@ -7,10 +7,12 @@ import type {
   BatchesListParams,
   BatchRun,
   CreateBatchRequest,
+  RerunBatchRunRequest,
   UpdateBatchRequest,
 } from '../types/batches.js';
 
-const RUN_TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
+// `partial` is terminal: some tests passed and some did not.
+const RUN_TERMINAL_STATUSES = new Set(['completed', 'partial', 'failed', 'cancelled']);
 
 export interface BatchesWaitForOptions {
   timeout?: number;
@@ -113,6 +115,28 @@ export class BatchesResource extends Resource {
 
   async getRun(runId: string, requestOptions?: RequestOptions): Promise<BatchRun> {
     return await this.transport.request('GET', `/testing/batch-runs/${runId}`, { requestOptions });
+  }
+
+  /**
+   * POST /testing/batch-runs/{id}/rerun — dispatch a new batch run containing
+   * only the failed tests of `batchRunId`, and return it. Omit `body` to
+   * re-run every failed test.
+   *
+   * **This places real phone calls and spends minutes**, exactly like the
+   * original batch. Passing tests are never re-run. Never retried
+   * automatically, whatever `maxRetries` is set to.
+   */
+  async rerun(
+    batchRunId: string,
+    body?: RerunBatchRunRequest,
+    requestOptions?: RequestOptions
+  ): Promise<BatchRun> {
+    // Never retried: a retry after a dropped connection could start a second rerun.
+    return await this.transport.request(
+      'POST',
+      `/testing/batch-runs/${encodeURIComponent(batchRunId)}/rerun`,
+      { body, requestOptions: { ...requestOptions, maxRetries: 0 } }
+    );
   }
 
   async waitForRun(

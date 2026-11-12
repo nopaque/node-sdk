@@ -118,3 +118,30 @@ describe('AudioResource', () => {
     await fs.unlink(tmp).catch(() => {});
   });
 });
+
+describe('AudioResource.generate', () => {
+  it('posts the body to /audio/generate', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        status: 201,
+        body: {
+          audioId: 'a_1', url: 'https://s3/a', expiresInSecs: 3600, characters: 5,
+          sizeBytes: 100, voiceId: 'Telnyx.Ultra.x', name: 'Hello',
+        },
+      },
+    ]);
+    const out = await client(fetch).audio.generate({
+      voiceId: 'Telnyx.Ultra.x',
+      text: 'Hello',
+      settings: { speed: 1.1 },
+    });
+    expect(out.audioId).toBe('a_1');
+    expect(calls[0].init.method).toBe('POST');
+    expect(new URL(calls[0].url).pathname).toBe('/audio/generate');
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({
+      voiceId: 'Telnyx.Ultra.x',
+      text: 'Hello',
+      settings: { speed: 1.1 },
+    });
+  });
+});

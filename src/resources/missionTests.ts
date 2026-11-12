@@ -3,6 +3,7 @@ import type { RequestOptions } from '../requestOptions.js';
 import { Paginator, Page } from '../pagination.js';
 import type {
   CreateMissionTestRequest,
+  MissionTestAnalyses,
   MissionTestDefaults,
   MissionTestListParams,
   MissionTestRun,
@@ -69,5 +70,16 @@ export class MissionTestsResource extends Resource {
 
   async cancel(id: string, requestOptions?: RequestOptions): Promise<MissionTestRun> {
     return await this.transport.request('POST', `/testing/mission-tests/${id}/cancel`, { requestOptions });
+  }
+
+  /**
+   * GET /testing/mission-tests/{id}/analyses — the latest post-call analysis of
+   * each type (judge, word transcript, latencies, silences) for a run. A type
+   * that has not been produced yet is `null`.
+   */
+  async getAnalyses(id: string, requestOptions?: RequestOptions): Promise<MissionTestAnalyses> {
+    return await this.transport.request('GET', `/testing/mission-tests/${encodeURIComponent(id)}/analyses`, {
+      requestOptions,
+    });
   }
 }

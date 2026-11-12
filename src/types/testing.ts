@@ -385,6 +385,8 @@ export interface Voice {
    * test does not choose one.
    */
   isDefault?: boolean;
+  /** Whether a preview sample exists; fetch it with `testing.getVoiceSample()`. */
+  hasSample?: boolean;
 }
 
 /** Response for `GET /testing/voices`. */
@@ -487,4 +489,32 @@ export interface UpdateCarrierRouteRequest {
   techPrefix?: string;
   customHeaders?: CarrierCustomHeader[];
   enabled?: boolean;
+}
+
+export interface DestinationCheckRequest {
+  /** The number in E.164 form. */
+  phoneNumber: string;
+  /** One of your carrier routes, to check the number as that route would dial it. */
+  carrierRouteId?: string;
+}
+
+/** Whether TotalPath would call the number, and why not if it would not. */
+export interface DestinationCheckResult {
+  allowed: boolean;
+  /** ISO 3166-1 alpha-2, or null if the number could not be parsed. */
+  country: string | null;
+  /** e.g. `FIXED_LINE`, `MOBILE`, `TOLL_FREE`. */
+  numberType: string | null;
+  /** Present when refused. */
+  kind?: 'policy-denied' | 'unparseable' | 'anchor-missing';
+  /** Present when refused. The technical reason. */
+  reason?: string;
+  /** Present when refused. A sentence to show the person. */
+  message?: string | null;
+}
+
+/** A short-lived presigned URL for a voice's stored sample (`audio/mpeg`). */
+export interface VoiceSample {
+  url: string;
+  expiresInSecs: number;
 }

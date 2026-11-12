@@ -148,6 +148,10 @@ await client.missionTestConfigs.update('cfg_1', { language: null });
 
 11 codes: `en`, `multi`, `es`, `fr`, `de`, `it`, `pt`, `nl`, `hi`, `ru`, `ja`.
 
+Both sets, with labels for showing a person and each set's default, come from
+`client.testing.listLanguages()` (`GET /languages`), which returns them as two
+separate lists.
+
 In both cases, omitting the field sends no `language` key at all, so the API
 applies its own default rather than the SDK guessing one.
 
@@ -196,6 +200,59 @@ the trunk is not active), `runs.create()` throws `ConflictError` (409) and no
 call is placed. Once the trunk has used its `dailyMinutes` for the day, it throws
 `RateLimitError` (429) until 00:00 UTC. To stop a route being used, call
 `routes.update(integrationId, routeId, { enabled: false })`.
+
+### Load-test reports and exports
+
+A report covers 1 to 20 finished load-test runs and builds up to three files
+(`data`, `excel`, `pdf`). An export is a zip of every call and step in one run.
+Both build in the background.
+
+```ts
+let report = await client.loadTesting.createReport({ loadTestRunIds: [runId] });
+while (report.status === 'pending' || report.status === 'running') {
+  await new Promise((r) => setTimeout(r, 10_000));
+  report = await client.loadTesting.getReport(report.reportId);
+}
+if (report.status === 'ready') {
+  const pdf = await client.loadTesting.getReportFileUrl(report.reportId, 'pdf'); // link valid 1 hour
+} else {
+  console.error('report failed:', report.error);
+}
+
+const exp = await client.loadTesting.createExport(runId);
+const done = await client.loadTesting.getExport(runId, exp.exportId); // downloadUrl when ready
+
+// Why calls failed, grouped by pattern, and the calls in one pattern.
+const { patterns } = await client.loadTesting.getFailurePatterns(runId);
+if (patterns.length > 0) {
+  for await (const call of client.loadTesting.listFailurePatternCalls(runId, patterns[0].id)) {
+    console.log(call.callId, call.failedStepName);
+  }
+}
+```
+
+### Numbers
+
+Rent phone numbers to use as caller IDs or test destinations.
+
+```ts
+const { numbers, allowance } = await client.numbers.list();
+const offers = await client.numbers.listAvailable({ country: 'GB', numberType: 'outbound' });
+
+// Spends money: a monthly charge per number. Do not retry an order blindly;
+// a repeat call orders a second number.
+const order = await client.numbers.order({
+  e164: offers.numbers[0].e164,
+  numberType: 'outbound',
+  country: 'GB',
+});
+if (order.orderId) {
+  const progress = await client.numbers.getOrder(order.orderId); // about a day in the UK
+}
+
+await client.numbers.update(order.number.numberId, { uses: ['load'] });
+await client.numbers.release(order.number.numberId); // billing stops
+```
 
 ## Features
 

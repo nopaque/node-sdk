@@ -320,3 +320,102 @@ export interface ListDigitalTestConfigsResponse {
 export interface ListDigitalComplianceAuditsResponse {
   audits: DigitalComplianceAuditSummary[];
 }
+
+/**
+ * A connector type. The connector-types registry lists all five; the API's
+ * OpenAPI document currently types a saved connector's `type` as only the first
+ * three, so treat the list as open.
+ */
+export type DigitalConnectorType =
+  | 'web-widget'
+  | 'connect-chat'
+  | 'http-json'
+  | 'lex-v2'
+  | 'direct-line';
+
+/** A saved, reusable connection definition a digital test config references by id. */
+export interface DigitalConnector {
+  id: string;
+  workspaceId: string;
+  userId?: string;
+  name?: string;
+  description?: string;
+  /** Immutable after creation; determines every field in `config`. */
+  type: DigitalConnectorType;
+  /** Immutable after creation; the stable key compliance reports aggregate on. */
+  targetRef: string;
+  /** The target object minus `transport`, validated against the schema for `type`. */
+  config: Record<string, unknown>;
+  typeUpdatedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDigitalConnectorRequest {
+  name: string;
+  description?: string;
+  type: DigitalConnectorType;
+  targetRef: string;
+  /** See `digitalTesting.listConnectorTypes()` for the fields each type accepts. */
+  config: Record<string, unknown>;
+}
+
+/**
+ * PATCH semantics: `name`, `description` and `config` are mutable. `type` and
+ * `targetRef` are rejected with 400 if they differ from the stored value. The
+ * merged config is validated, not the patch alone.
+ */
+export interface UpdateDigitalConnectorRequest {
+  name?: string;
+  description?: string;
+  config?: Record<string, unknown>;
+  type?: DigitalConnectorType;
+  targetRef?: string;
+}
+
+export interface DigitalConnectorListParams {
+  /** Filter to one connector type. An unknown type is a 400, not an empty list. */
+  type?: DigitalConnectorType;
+  /**
+   * Sent as the page size (1-200). With the auto-paginating `list...()` method it
+   * also caps the TOTAL number of items yielded; with `list...Page()` it only
+   * sets the size of the one page.
+   */
+  limit?: number;
+  /** Opaque cursor from `nextCursor` in a previous response. */
+  cursor?: string;
+  nextToken?: string;
+}
+
+export interface ListDigitalConnectorsResponse {
+  connectors: DigitalConnector[];
+  /** Present only when another page exists. */
+  nextCursor?: string;
+}
+
+export interface DigitalConnectorFormField {
+  name: string;
+  label: string;
+  type: 'text' | 'boolean' | 'keyvalue';
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+}
+
+/** One entry in the connector-type registry. */
+export interface DigitalConnectorTypeDef {
+  type: DigitalConnectorType;
+  label: string;
+  hint: string;
+  formFields: DigitalConnectorFormField[];
+  /**
+   * Present only for a type whose target can run in the customer's own AWS
+   * account: what the customer's role trust policy must contain.
+   */
+  crossAccount?: {
+    principalArn: string;
+    roleNamePrefix: string;
+    actions: string[];
+    externalId?: string;
+  };
+}

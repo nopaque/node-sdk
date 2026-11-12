@@ -6,6 +6,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Load-test reports** (`/testing/reports`): `loadTesting.createReport()`,
+  `listReports()` / `listReportsPage()`, `getReport()`, `deleteReport()` and
+  `getReportFileUrl(reportId, pack)`.
+- **Load-test run exports**: `loadTesting.createExport(runId)`,
+  `listExports(runId)` and `getExport(runId, exportId)`.
+- **Failure patterns**: `loadTesting.getFailurePatterns(runId, { scope })`,
+  `reclassifyFailurePatterns(runId, { scope })` and
+  `listFailurePatternCalls(runId, patternId)` / `listFailurePatternCallsPage()`.
+- **Digital-test connectors** (beta): `digitalTesting.listConnectors()` /
+  `listConnectorsPage()`, `getConnector()`, `createConnector()`,
+  `updateConnector()`, `deleteConnector()` and `listConnectorTypes()`.
+- **Numbers**, a new `client.numbers` resource: `list()`, `listAvailable()`,
+  `getRequirements()`, `order()`, `getOrder()`, `update()` and `release()`.
+  `order()` spends money: each number has a monthly charge.
+- `audio.generate()` (`POST /audio/generate`): text to speech into a stored
+  voice clip. Billed per character.
+- `batches.rerun(batchRunId, body?)` (`POST /testing/batch-runs/{id}/rerun`):
+  re-run the failed tests of a batch run. Places real calls.
+- `testing.checkDestination()` (`POST /testing/destination-check`): whether a
+  number would be dialled. Nothing is dialled.
+- `testing.getVoiceSample(voiceId)` and `Voice.hasSample`.
+- `testing.listLanguages()` (`GET /languages`): both language sets with labels.
+- `missionTests.getAnalyses(id)` (`GET /testing/mission-tests/{id}/analyses`):
+  the latest post-call analysis of each type for a mission test run.
+- `numbers.order()`, `audio.generate()` and `batches.rerun()` are never
+  retried automatically, whatever `maxRetries` is set to: a retry after a
+  dropped connection could buy a second number, bill a second clip or start a
+  second rerun.
+
+### Fixed
+
+- `BatchRunStatus` includes `pending` and `partial`, and
+  `batches.waitForRun()` treats `partial` as terminal instead of polling until
+  it times out.
+
 ## [0.13.0] - 2026-10-26
 
 ### Added

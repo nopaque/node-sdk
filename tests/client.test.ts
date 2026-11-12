@@ -23,6 +23,7 @@ describe('Nopaque', () => {
     expect(c.loadTesting).toBeDefined();
     expect(c.scheduler).toBeDefined();
     expect(c.enrichment).toBeDefined();
+    expect(c.numbers).toBeDefined();
   });
 
   it('exposes VERSION export', async () => {

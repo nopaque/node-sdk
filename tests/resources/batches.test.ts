@@ -118,3 +118,28 @@ describe('BatchesResource', () => {
     ).rejects.toBeInstanceOf(NopaqueTimeoutError);
   });
 });
+
+describe('BatchesResource.rerun', () => {
+  it('posts with no body to re-run every failed test', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { status: 201, body: { id: 'br_2', batchId: 'b_1', status: 'pending', triggeredBy: 'rerun' } },
+    ]);
+    const run = await client(fetch).batches.rerun('br_1');
+    expect(run.id).toBe('br_2');
+    expect(calls[0].init.method).toBe('POST');
+    expect(new URL(calls[0].url).pathname).toBe('/testing/batch-runs/br_1/rerun');
+    expect(calls[0].init.body).toBeUndefined();
+  });
+
+  it('sends a selector when given', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ status: 201, body: { id: 'br_2', status: 'pending' } }]);
+    await client(fetch).batches.rerun('br_1', { filter: 'errors' });
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ filter: 'errors' });
+  });
+
+  it('waitForRun treats `partial` as terminal', async () => {
+    const { fetch } = makeQueuedFetch([{ body: { id: 'br_1', status: 'partial' } }]);
+    const run = await client(fetch).batches.waitForRun('br_1', { pollInterval: 1 });
+    expect(run.status).toBe('partial');
+  });
+});

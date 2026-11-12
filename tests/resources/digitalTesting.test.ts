@@ -289,3 +289,60 @@ describe('DigitalTestingResource', () => {
     ).rejects.toBeInstanceOf(NopaqueTimeoutError);
   });
 });
+
+describe('DigitalTestingResource connectors', () => {
+  const CONNECTOR = {
+    id: 'cn_1', workspaceId: 'ws', type: 'http-json', targetRef: 'bot-a', name: 'Bot A',
+    config: { endpoint: 'https://bot' }, typeUpdatedAt: 'http-json#x',
+    createdAt: '2026-11-12T00:00:00Z', updatedAt: '2026-11-12T00:00:00Z',
+  };
+
+  it('listConnectors translates nextCursor and passes type', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { connectors: [CONNECTOR], nextCursor: 'n2' } },
+      { body: { connectors: [{ ...CONNECTOR, id: 'cn_2' }] } },
+    ]);
+    const out = [];
+    for await (const x of client(fetch).digitalTesting.listConnectors({ type: 'http-json' })) out.push(x.id);
+    expect(out).toEqual(['cn_1', 'cn_2']);
+    const second = new URL(calls[1].url);
+    expect(second.pathname).toBe('/digital-testing/connectors');
+    expect(second.searchParams.get('type')).toBe('http-json');
+    expect(second.searchParams.get('cursor')).toBe('n2');
+  });
+
+  it('listConnectorsPage', async () => {
+    const { fetch } = makeQueuedFetch([{ body: { connectors: [CONNECTOR] } }]);
+    const page = await client(fetch).digitalTesting.listConnectorsPage();
+    expect(page.items).toHaveLength(1);
+    expect(page.nextToken).toBeNull();
+  });
+
+  it('create / get / update / delete', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { status: 201, body: CONNECTOR },
+      { body: CONNECTOR },
+      { body: { ...CONNECTOR, name: 'Renamed' } },
+      { body: { message: 'Connector deleted' } },
+    ]);
+    const c = client(fetch);
+    await c.digitalTesting.createConnector({
+      name: 'Bot A', type: 'http-json', targetRef: 'bot-a', config: { endpoint: 'https://bot' },
+    });
+    await c.digitalTesting.getConnector('cn_1');
+    const updated = await c.digitalTesting.updateConnector('cn_1', { name: 'Renamed' });
+    expect(updated.name).toBe('Renamed');
+    await c.digitalTesting.deleteConnector('cn_1');
+    expect(calls.map((x) => x.init.method)).toEqual(['POST', 'GET', 'PATCH', 'DELETE']);
+    expect(new URL(calls[3].url).pathname).toBe('/digital-testing/connectors/cn_1');
+  });
+
+  it('listConnectorTypes unwraps `types`', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { types: [{ type: 'web-widget', label: 'Web widget', hint: 'h', formFields: [] }] } },
+    ]);
+    const types = await client(fetch).digitalTesting.listConnectorTypes();
+    expect(types[0].type).toBe('web-widget');
+    expect(new URL(calls[0].url).pathname).toBe('/digital-testing/connector-types');
+  });
+});
