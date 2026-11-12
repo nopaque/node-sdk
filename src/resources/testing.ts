@@ -10,6 +10,8 @@ import type {
   CreateTestConfigRequest,
   CreateTestJobRequest,
   CreateTestRunRequest,
+  DestinationCheckRequest,
+  DestinationCheckResult,
   ListVoicesResponse,
   MissionTestRunResponse,
   TestConfig,
@@ -23,7 +25,9 @@ import type {
   TestRunListParams,
   UpdateCarrierRouteRequest,
   UpdateTestConfigRequest,
+  VoiceSample,
 } from '../types/testing.js';
+import type { LanguagesResponse } from '../types/language.js';
 
 const RUN_TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
 
@@ -214,6 +218,40 @@ export class TestingRunsResource extends Resource {
     return new Page(raw.runs ?? raw.items ?? [], raw.nextCursor ?? raw.nextToken ?? null);
   }
 
+  /**
+   * GET /testing/voices/{voiceId}/sample — a short-lived presigned URL for the
+   * voice's stored sample. Use `hasSample` from `listVoices()` to decide whether
+   * to offer playback. 404 when the voice has no sample.
+   */
+  async getVoiceSample(voiceId: string, requestOptions?: RequestOptions): Promise<VoiceSample> {
+    return await this.transport.request(
+      'GET', `/testing/voices/${encodeURIComponent(voiceId)}/sample`, { requestOptions }
+    );
+  }
+
+  /**
+   * POST /testing/destination-check — would a test, mission test or map to
+   * this number be dialled? Nothing is saved and **nothing is dialled**, so it
+   * is free and safe to call as a number is typed.
+   */
+  async checkDestination(
+    body: DestinationCheckRequest,
+    requestOptions?: RequestOptions
+  ): Promise<DestinationCheckResult> {
+    return await this.transport.request('POST', '/testing/destination-check', {
+      body,
+      requestOptions,
+    });
+  }
+
+  /**
+   * GET /languages — both language sets (transcription and call), with labels
+   * and defaults. Reference data, the same for every caller.
+   */
+  async listLanguages(requestOptions?: RequestOptions): Promise<LanguagesResponse> {
+    return await this.transport.request('GET', '/languages', { requestOptions });
+  }
+
   /** GET /testing/runs/aggregate — grouped counts over test runs. */
   async aggregate(
     params: TestRunAggregateParams,
@@ -365,6 +403,40 @@ export class TestingResource extends Resource {
   /** GET /testing/voices — operator-enabled voices a mission test may use. */
   async listVoices(requestOptions?: RequestOptions): Promise<ListVoicesResponse> {
     return await this.transport.request('GET', '/testing/voices', { requestOptions });
+  }
+
+  /**
+   * GET /testing/voices/{voiceId}/sample — a short-lived presigned URL for the
+   * voice's stored sample. Use `hasSample` from `listVoices()` to decide whether
+   * to offer playback. 404 when the voice has no sample.
+   */
+  async getVoiceSample(voiceId: string, requestOptions?: RequestOptions): Promise<VoiceSample> {
+    return await this.transport.request(
+      'GET', `/testing/voices/${encodeURIComponent(voiceId)}/sample`, { requestOptions }
+    );
+  }
+
+  /**
+   * POST /testing/destination-check — would a test, mission test or map to
+   * this number be dialled? Nothing is saved and **nothing is dialled**, so it
+   * is free and safe to call as a number is typed.
+   */
+  async checkDestination(
+    body: DestinationCheckRequest,
+    requestOptions?: RequestOptions
+  ): Promise<DestinationCheckResult> {
+    return await this.transport.request('POST', '/testing/destination-check', {
+      body,
+      requestOptions,
+    });
+  }
+
+  /**
+   * GET /languages — both language sets (transcription and call), with labels
+   * and defaults. Reference data, the same for every caller.
+   */
+  async listLanguages(requestOptions?: RequestOptions): Promise<LanguagesResponse> {
+    return await this.transport.request('GET', '/languages', { requestOptions });
   }
 
   /** GET /testing/runs/aggregate — grouped counts over test runs. */

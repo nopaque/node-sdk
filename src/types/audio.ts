@@ -62,3 +62,33 @@ export interface UploadInput {
 export interface DownloadOptions {
   to?: string; // when given, write to this path and return undefined
 }
+
+export interface GenerateAudioRequest {
+  /** An enabled voice id from `testing.listVoices()`. */
+  voiceId: string;
+  /** The words to speak, 1-1000 characters. Every character is billable, markup included. */
+  text: string;
+  /** Delivery settings. Ultra voices only. */
+  settings?: {
+    /** 0.6-1.5; above 1 is faster. */
+    speed?: number;
+    /** 0.5-2. */
+    volume?: number;
+    emotion?: 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
+  };
+  /** Display name for the clip. Defaults to the start of the text. */
+  name?: string;
+}
+
+export interface GeneratedAudio {
+  audioId: string;
+  /** Presigned GET URL for listening to the clip, valid for `expiresInSecs`. */
+  url: string;
+  expiresInSecs: number;
+  /** Billable characters. */
+  characters: number;
+  sizeBytes: number;
+  durationSecs?: number;
+  voiceId: string;
+  name: string;
+}

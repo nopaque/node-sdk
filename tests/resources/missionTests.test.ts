@@ -304,3 +304,26 @@ describe('MissionTestsResource', () => {
     expect(u.searchParams.has('cursor')).toBe(false);
   });
 });
+
+describe('MissionTestsResource.getAnalyses', () => {
+  it('GETs the analyses for a run', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        body: {
+          runId: 'mt_1',
+          analyses: {
+            judge_mission: {
+              runId: 'mt_1', type: 'judge_mission', version: 'v1',
+              producedAt: '2026-11-12T00:00:00Z', status: 'completed', data: { verdict: 'pass' },
+            },
+            transcribe_words: null,
+          },
+        },
+      },
+    ]);
+    const out = await client(fetch).missionTests.getAnalyses('mt_1');
+    expect(out.analyses.judge_mission?.status).toBe('completed');
+    expect(out.analyses.transcribe_words).toBeNull();
+    expect(new URL(calls[0].url).pathname).toBe('/testing/mission-tests/mt_1/analyses');
+  });
+});

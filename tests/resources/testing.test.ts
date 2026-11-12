@@ -513,3 +513,39 @@ describe('TestingResource carrier fields', () => {
     expect(step?.similarity).toBe(98);
   });
 });
+
+describe('TestingResource: voice sample, destination check, languages', () => {
+  it('getVoiceSample', async () => {
+    const { fetch, calls } = makeQueuedFetch([{ body: { url: 'https://s3/v', expiresInSecs: 300 } }]);
+    const out = await client(fetch).testing.getVoiceSample('Telnyx.Ultra.abc');
+    expect(out.url).toBe('https://s3/v');
+    expect(new URL(calls[0].url).pathname).toBe('/testing/voices/Telnyx.Ultra.abc/sample');
+  });
+
+  it('checkDestination posts the number', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { allowed: false, country: 'NZ', numberType: 'MOBILE', kind: 'policy-denied', message: "We can't call numbers in New Zealand yet." } },
+    ]);
+    const out = await client(fetch).testing.checkDestination({ phoneNumber: '+6421000000' });
+    expect(out.allowed).toBe(false);
+    expect(out.kind).toBe('policy-denied');
+    expect(calls[0].init.method).toBe('POST');
+    expect(new URL(calls[0].url).pathname).toBe('/testing/destination-check');
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ phoneNumber: '+6421000000' });
+  });
+
+  it('listLanguages', async () => {
+    const { fetch, calls } = makeQueuedFetch([
+      {
+        body: {
+          transcription: { default: 'en-GB', languages: [{ code: 'en-GB', label: 'English (UK)', models: ['nova-3'], codeSwitching: false }] },
+          call: { default: 'en', languages: [{ code: 'en', label: 'English', model: 'flux', codeSwitching: false }] },
+        },
+      },
+    ]);
+    const out = await client(fetch).testing.listLanguages();
+    expect(out.transcription.default).toBe('en-GB');
+    expect(out.call.languages[0].code).toBe('en');
+    expect(new URL(calls[0].url).pathname).toBe('/languages');
+  });
+});

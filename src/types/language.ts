@@ -118,3 +118,34 @@ export type CallLanguage =
   | 'hi'
   | 'ru'
   | 'ja';
+
+/** One transcription language, as `GET /languages` lists it. */
+export interface TranscriptionLanguageInfo {
+  /** The value to send as `language`. */
+  code: TranscriptionLanguage;
+  /** The customer-facing name. */
+  label: string;
+  /** Informational: nopaque chooses the model server-side. */
+  models: Array<'nova-2' | 'nova-3'>;
+  /** True only for `multi`. */
+  codeSwitching: boolean;
+}
+
+/** One call language, as `GET /languages` lists it. */
+export interface CallLanguageInfo {
+  /** The value to send as `language` on a mission test. */
+  code: CallLanguage;
+  label: string;
+  /** Informational: nopaque chooses the model. */
+  model: 'flux' | 'flux-multi';
+  codeSwitching: boolean;
+}
+
+/**
+ * Both language sets, side by side. They are distinct and not
+ * interchangeable; do not flatten them into one list.
+ */
+export interface LanguagesResponse {
+  transcription: { default: TranscriptionLanguage; languages: TranscriptionLanguageInfo[] };
+  call: { default: CallLanguage; languages: CallLanguageInfo[] };
+}

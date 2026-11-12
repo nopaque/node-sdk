@@ -32,7 +32,13 @@ export interface BatchesListParams {
   nextToken?: string;
 }
 
-export type BatchRunStatus = 'running' | 'completed' | 'failed' | 'cancelled';
+export type BatchRunStatus =
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'partial'
+  | 'cancelled';
 
 export interface BatchRun {
   id: string;
@@ -47,4 +53,16 @@ export interface BatchRun {
   /** @deprecated use `id` */
   runId?: string;
   [key: string]: unknown;
+}
+
+/**
+ * Optional selector for `batches.rerun()`. Omit it to re-run every failed test.
+ * `members` takes precedence over `testConfigIds`, which takes precedence over
+ * `filter`. Ids that did not fail in the parent run are silently dropped.
+ */
+export interface RerunBatchRunRequest {
+  filter?: 'all-failed' | 'errors' | 'mismatches';
+  /** Legacy: explicit param configs to re-run. */
+  testConfigIds?: string[];
+  members?: Array<{ type: 'param' | 'mission'; configId: string }>;
 }
