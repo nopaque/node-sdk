@@ -2,6 +2,13 @@ import type { TranscriptionLanguage } from './language.js';
 import type { CallTelemetry } from './telemetry.js';
 
 export interface TestStep {
+  /**
+   * Step identifier (a UUID). Leave it out when creating a config and the API
+   * generates one; a step read back from the API always has it. On update,
+   * send a step's existing `id` to keep it the same step: a step sent without
+   * one is stored with a new `id`.
+   */
+  id?: string;
   name?: string;
   action?: string;
   type?: 'dtmf' | 'audio' | 'listen';

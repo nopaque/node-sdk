@@ -387,6 +387,19 @@ describe('TestingResource config fields', () => {
     expect(created.version).toBe(1);
   });
 
+  it('a step is sent without an id, and read back with the one the API generated', async () => {
+    const step = { name: 'Main menu', type: 'listen' as const, expected: 'Welcome' };
+    const stepId = '0b6f3c1e-8a41-4a57-9d55-2f1f0f6f7a10';
+    const { fetch, calls } = makeQueuedFetch([
+      { body: { id: 'cfg_1', name: 'A', phoneNumber: '+1', steps: [{ id: stepId, ...step }] } },
+    ]);
+    const created = await client(fetch).testing.configs.create({ name: 'A', phoneNumber: '+1', steps: [step] });
+    expect(JSON.parse(calls[0].init.body as string).steps).toEqual([step]);
+    // Typed as a string, not `unknown` through the index signature.
+    const id: string | undefined = created.steps[0].id;
+    expect(id).toBe(stepId);
+  });
+
   it('configs.update sends only what is given, and null clears schedule and duration', async () => {
     const { fetch, calls } = makeQueuedFetch([{ body: { id: 'cfg_1' } }, { body: { id: 'cfg_1' } }]);
     const c = client(fetch);

@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `TestStep.id` is now a declared, optional `string`. Until now it was only
+  reachable through the index signature, typed `unknown`. It is optional
+  because a step sent to `testing.configs.create()` or `update()` may leave
+  it out (the API generates one) and every stored step carries it. This
+  follows the OpenAPI document, which now describes a step as sent
+  (`TestStepInput`, `id` optional) separately from a step as stored
+  (`TestStep`, `id` required). No request or response changes.
+
 ## [0.15.0] - 2026-11-12
 
 ### Fixed
