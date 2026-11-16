@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-16
+
 ### Added
 
 - `TestStep.id` is now a declared, optional `string`. Until now it was only
@@ -487,7 +489,8 @@ client.mapping.create({
 - Typed error class hierarchy.
 - Dual ESM + CJS output with TypeScript definitions.
 
-[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/nopaque/node-sdk/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.16.0
 [0.15.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.15.0
 [0.14.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.14.0
 [0.13.0]: https://github.com/nopaque/node-sdk/releases/tag/v0.13.0
